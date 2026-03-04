@@ -3,6 +3,10 @@ const cors = require('cors');
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// 🚀 DEPLOYMENT VERSION STAMP - Instant verification trick
+const DEPLOY_VERSION = "v2.3-POST-FIX-2026-03-04-19:50";
+console.log("🚀 Starting server with version:", DEPLOY_VERSION);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -374,6 +378,20 @@ app.get('/api/user-devices/:userId', async (req, res) => {
     console.error('❌ Get devices error:', error);
     res.status(500).json({ success: false });
   }
+});
+
+// 🚀 Version Endpoint - Instant deployment verification
+app.get('/api/version', (req, res) => {
+  res.json({ 
+    version: DEPLOY_VERSION,
+    timestamp: new Date().toISOString(),
+    routes: {
+      health: '/api/health',
+      orders_get: '/api/orders (GET)',
+      orders_post: '/api/orders (POST)',
+      settings: '/api/settings'
+    }
+  });
 });
 
 // Health
