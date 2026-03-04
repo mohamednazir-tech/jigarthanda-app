@@ -152,36 +152,57 @@ app.post('/api/orders/sync', async (req, res) => {
   }
 });
 
-// Create Order with Push Notification - v2.0
+// Create Order with Push Notification - v2.2 (POST route fix - $(date))
 app.post('/api/orders', async (req, res) => {
   try {
+    console.log('=== ORDER REQUEST RECEIVED ===');
+    console.log('Request body:', req.body);
+    console.log('Request headers:', req.headers);
+    
     const { userId, items, total, tax, grandTotal, paymentMethod } = req.body;
 
     if (!userId || !items || !total || !paymentMethod) {
+      console.log('=== VALIDATION FAILED ===');
+      console.log('Missing fields:', { userId: !!userId, items: !!items, total: !!total, paymentMethod: !!paymentMethod });
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     const orderId = `ORD${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
 
+    console.log('=== DATABASE QUERY START ===');
+    const query = `
+      INSERT INTO orders (id, userId, items, total, tax, grandTotal, paymentMethod) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    `;
+    
+    console.log('Query:', query);
+    console.log('Values:', [orderId, userId, JSON.stringify(items), total, tax || 0, grandTotal, paymentMethod]);
+
     const result = await pool.query(
       `INSERT INTO orders (id, userId, items, total, tax, grandTotal, paymentMethod) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [orderId, userId, JSON.stringify(items), total, tax || 0, grandTotal, paymentMethod]
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`
     );
+    
+    console.log('=== DATABASE RESULT ===');
+    console.log('Result:', result);
+    console.log('Rows:', result.rows);
 
     const order = result.rows[0];
+
+    console.log('=== ORDER CREATED ===');
+    console.log('Order:', order);
 
     // Send push notification to Nazir if staff created order
     if (userId === 'usr_admin_001') { // Admin user ID
       await sendPushNotificationToNazir(order);
     }
 
-    console.log('✅ Order created:', orderId);
-    res.json({ success: true, order });
-
+    console.log('Order created:', orderId);
+    res.status(200).json({ success: true, message: 'Order created', order });
   } catch (error) {
-    console.error('❌ Order creation error:', error);
-    res.status(500).json({ success: false, message: 'Order creation failed' });
+    console.error('=== ORDER CREATION ERROR ===');
+    console.error('Error details:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
