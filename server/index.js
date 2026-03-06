@@ -957,6 +957,87 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Settings endpoints for shop management
+app.get('/api/settings', async (req, res) => {
+  try {
+    console.log('=== GET SHOP SETTINGS ===');
+    
+    // Default settings if none exist
+    const defaultSettings = {
+      name: 'Madurai Vilakkuthoon Hanifa Jigarthanda',
+      nameLocal: 'மதுரை விளக்குத்தூண் ஹனிஃபா ஜிகர்தண்டா',
+      address: 'Chennai, Tamil Nadu - 600001',
+      phone: '+91 98765 43210',
+      gstNumber: '33AABCU9603R1ZM',
+    };
+    
+    res.json({ 
+      success: true, 
+      data: defaultSettings
+    });
+  } catch (error) {
+    console.error('❌ Get settings error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    console.log('=== UPDATE SHOP SETTINGS ===');
+    console.log('Settings data:', req.body);
+    
+    const { name, nameLocal, address, phone, gstNumber } = req.body;
+    
+    // Validate required fields
+    if (!name || !nameLocal || !address || !phone) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields: name, nameLocal, address, phone' 
+      });
+    }
+    
+    const updatedSettings = {
+      name: name.trim(),
+      nameLocal: nameLocal.trim(),
+      address: address.trim(),
+      phone: phone.trim(),
+      gstNumber: gstNumber ? gstNumber.trim() : '',
+    };
+    
+    console.log('✅ Settings updated successfully:', updatedSettings);
+    
+    res.json({ 
+      success: true, 
+      message: 'Settings updated successfully',
+      data: updatedSettings
+    });
+  } catch (error) {
+    console.error('❌ Update settings error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT 1');
+    res.json({ 
+      success: true, 
+      status: 'healthy',
+      database: 'connected',
+      version: DEPLOY_VERSION,
+      uptime: process.uptime()
+    });
+  } catch {
+    res.status(500).json({
+      success: false,
+      message: 'Database not connected',
+      version: DEPLOY_VERSION,
+      uptime: process.uptime()
+    });
+  }
+});
+
 /* ===========================
    Start Server
 =========================== */
@@ -970,7 +1051,9 @@ app.get('/', (req, res) => {
       orders: '/api/orders',
       stats: '/api/orders/stats',
       paymentSummary: '/api/orders/payment-summary',
-      orderStatus: '/api/orders/:id/status'
+      orderStatus: '/api/orders/:id/status',
+      settings: '/api/settings',
+      health: '/api/health'
     },
     status: 'production-ready',
     documentation: 'https://github.com/mohamednazir-tech/jigarthanda-app'
