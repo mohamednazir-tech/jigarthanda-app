@@ -961,6 +961,22 @@ app.get('/api/health', async (req, res) => {
    Start Server
 =========================== */
 
+// Root route - API info
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 Jigarthanda POS API running',
+    version: 'v2.3-POST-FIX-2026-03-04-19:50',
+    endpoints: {
+      orders: '/api/orders',
+      stats: '/api/orders/stats',
+      paymentSummary: '/api/orders/payment-summary',
+      orderStatus: '/api/orders/:id/status'
+    },
+    status: 'production-ready',
+    documentation: 'https://github.com/mohamednazir-tech/jigarthanda-app'
+  });
+});
+
 // Start server
 const startServer = async () => {
   try {
