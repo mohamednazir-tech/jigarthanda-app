@@ -219,7 +219,7 @@ app.post('/api/orders', async (req, res) => {
     if (userId === 'usr_admin_001') {
       createdByName = 'Admin';
     } else if (userId === 'usr_nazir_001') {
-      createdByName = 'Nazir';
+      createdByName = 'Baseel';
     }
 
     console.log('=== DATABASE TRANSACTION START ===');
@@ -259,10 +259,10 @@ app.post('/api/orders', async (req, res) => {
       console.log('Created by user ID:', userId);
       console.log('User role from cache:', userRole);
 
-      // Send push notification to Nazir if staff user created order
+      // Send push notification to Baseel if staff user created order
       if (userRole === 'staff') {
-        console.log('🔔 Staff user created order - sending notification to Nazir');
-        await sendPushNotificationToNazir(order);
+        console.log('🔔 Staff user created order - sending notification to Baseel');
+        await sendPushNotificationToBaseel(order);
       } else {
         console.log('👤 Admin user created order - no notification needed');
       }
@@ -286,19 +286,19 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Send push notification to Nazir
-async function sendPushNotificationToNazir(order) {
+// Send push notification to Baseel
+async function sendPushNotificationToBaseel(order) {
   try {
-    // Get Nazir's device tokens
+    // Get Baseel's device tokens
     const devicesResponse = await pool.query(
       'SELECT token FROM user_devices WHERE userId = $1',
-      ['usr_nazir_001'] // Nazir user ID
+      ['usr_nazir_001'] // Baseel user ID
     );
 
     const tokens = devicesResponse.rows.map(row => row.token);
 
     if (tokens.length === 0) {
-      console.log('No devices found for Nazir');
+      console.log('No devices found for Baseel');
       return;
     }
 
@@ -340,7 +340,7 @@ async function sendPushNotificationToNazir(order) {
       );
     }
 
-    console.log('✅ Push notification sent to Nazir devices:', tokens.length);
+    console.log('✅ Push notification sent to Baseel devices:', tokens.length);
 
   } catch (error) {
     console.error('❌ Push notification error:', error);
@@ -408,8 +408,8 @@ async function sendPushNotificationToUser(order, userId) {
   }
 }
 
-// Send daily summary notification to Nazir at 11:59 PM
-async function sendDailySummaryToNazir() {
+// Send daily summary notification to Baseel at 11:59 PM
+async function sendDailySummaryToBaseel() {
   try {
     const currentDate = new Date();
     const startOfDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
@@ -428,7 +428,7 @@ async function sendDailySummaryToNazir() {
       0
     );
 
-    // Get Nazir's device tokens
+    // Get Baseel's device tokens
     const devicesResponse = await pool.query(
       'SELECT token FROM user_devices WHERE userId = $1',
       ['usr_nazir_001']
@@ -437,7 +437,7 @@ async function sendDailySummaryToNazir() {
     const tokens = devicesResponse.rows.map(row => row.token);
 
     if (tokens.length === 0) {
-      console.log('No devices found for Nazir daily summary');
+      console.log('No devices found for Baseel daily summary');
       return;
     }
 
@@ -474,7 +474,7 @@ async function sendDailySummaryToNazir() {
       );
     }
 
-    console.log(`✅ Daily summary sent to Nazir: ${totalOrders} orders, ₹${totalSales}`);
+    console.log(`✅ Daily summary sent to Baseel: ${totalOrders} orders, ₹${totalSales}`);
 
   } catch (error) {
     console.error('❌ Daily summary notification error:', error);
@@ -496,7 +496,7 @@ function scheduleDailySummaryFallback() {
   console.log(`⏰ Runs in ${(delay / 60000).toFixed(1)} minutes`);
 
   setTimeout(() => {
-    sendDailySummaryToNazir();
+    sendDailySummaryToBaseel();
     scheduleDailySummaryFallback(); // schedule next run
   }, delay);
 }
@@ -505,7 +505,7 @@ function scheduleDailySummaryFallback() {
 if (cron) {
   cron.schedule('1 0 * * *', async () => {
     console.log('📅 Running daily summary via cron (12:01 AM)');
-    await sendDailySummaryToNazir();
+    await sendDailySummaryToBaseel();
   });
 } else {
   console.log('⚠️ Using fallback scheduler - install node-cron for production reliability');
