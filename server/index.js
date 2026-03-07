@@ -908,6 +908,21 @@ app.delete('/api/orders/all', async (req, res) => {
   }
 });
 
+// Manual daily summary test endpoint
+app.post('/api/test-daily-summary', async (req, res) => {
+  try {
+    console.log('🧪 Testing daily summary notification...');
+    await sendDailySummaryToBaseel();
+    res.json({ 
+      success: true, 
+      message: 'Daily summary notification sent to Baseel devices'
+    });
+  } catch (error) {
+    console.error('❌ Daily summary test error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Health
 app.get('/api/health', async (req, res) => {
   try {
