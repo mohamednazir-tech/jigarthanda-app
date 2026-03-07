@@ -248,7 +248,7 @@ app.post('/api/orders', async (req, res) => {
       
       // Get sequential order number within transaction
       const orderNumberResult = await client.query('SELECT nextval(\'order_number_seq\') as orderNumber');
-      const orderNumber = orderNumberResult.rows[0].orderNumber;
+      const orderNumber = orderNumberResult.rows[0].ordernumber; // PostgreSQL returns lowercase
       
       // Insert order with the obtained sequence number
       const query = `
