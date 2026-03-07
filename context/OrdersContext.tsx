@@ -33,12 +33,18 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
   useEffect(() => {
     if (user?.id !== 'usr_nazir_001') return; // Only Baseel needs live updates
     
-    console.log('🔄 Starting live orders polling for Baseel...');
+    console.log('🔄 Starting live orders polling for Baseel (Multi-Device Sync)...');
     
     const pollInterval = setInterval(async () => {
       try {
-        console.log('🔄 Polling for new orders...');
+        console.log('🔄 Polling for new orders from server...');
         const apiOrders = await ApiService.getOrders();
+        
+        // ALWAYS update with server data for multi-device consistency
+        setAllOrders(apiOrders.map(order => ({
+          ...order,
+          createdAt: new Date(order.createdAt)
+        })));
         
         if (apiOrders.length > allOrders.length) {
           console.log(`🆕 ${apiOrders.length - allOrders.length} new orders found!`);
@@ -48,18 +54,13 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
             try {
               // Use Expo Audio for sound alert
               const { Sound } = await require('expo-av');
-              const { sound } = await Sound.createAsync(
-                require('@/assets/sounds/order-alert.mp3')
-              );
-              await sound.playAsync();
-              console.log('🔔 Order alert sound played');
+              const soundObject = new Sound.Sound();
+              await soundObject.loadAsync(require('@/assets/sounds/notification.mp3'));
+              await soundObject.playAsync();
             } catch (error) {
-              console.log('🔔 Could not play sound (file may not exist):', error);
-              // Fallback: Use system sound
-              console.log('🔔 New order received!');
+              console.log('Error playing sound:', error);
             }
           }
-          
           setAllOrders(apiOrders.map(order => ({
             ...order,
             createdAt: new Date(order.createdAt)

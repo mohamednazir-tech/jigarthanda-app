@@ -138,6 +138,15 @@ export default function OrdersScreen() {
         <View>
           <View style={styles.titleRow}>
             <Text style={styles.title}>Orders</Text>
+            <TouchableOpacity 
+              style={styles.refreshButton} 
+              onPress={() => {
+                console.log('🔄 Manual refresh triggered');
+                loadData();
+              }}
+            >
+              <Ionicons name="refresh" size={16} color={Colors.primary} />
+            </TouchableOpacity>
             {isLive && (
               <View style={styles.liveIndicator}>
                 <View style={styles.liveDot} />
@@ -322,6 +331,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.text,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.primaryLight,
   },
   monthlyReportSection: {
     marginBottom: 12,
