@@ -89,7 +89,7 @@ export default function MenuScreen() {
 
   const filteredItems = menuItems.filter(item => item.category === selectedCategory);
 
-  // Show stats bar only for nazir user (admin role) - hide from admin user (staff role)
+  // Show stats bar only for baseel user (admin role) - hide from admin user (staff role)
   const showStatsBar = user?.role === 'admin';
   
   // Debug: Log user info and stats bar visibility
@@ -99,6 +99,8 @@ export default function MenuScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Text style={styles.headerTitle}></Text>
+        <Text style={styles.headerTitle}>Madurai Vilakkuthoon</Text>
         <Text style={styles.headerTitle}>Hanifa Jigarthanda</Text>
       </View>
       {showStatsBar && (

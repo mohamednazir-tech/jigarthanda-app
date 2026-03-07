@@ -90,7 +90,7 @@ export default function OrdersScreen() {
   const { orders, todayOrders, todayTotal, clearAllOrders } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
-  // Hide orders from admin user (staff role) - only show to Nazir (admin role)
+  // Hide orders from admin user (staff role) - only show to Baseel (admin role)
   if (user?.role === 'staff') {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -98,14 +98,14 @@ export default function OrdersScreen() {
           <Ionicons name="lock-closed" size={64} color={Colors.border} />
           <Text style={styles.accessDeniedTitle}>Access Restricted</Text>
           <Text style={styles.accessDeniedText}>
-            Only Nazir can view orders
+            Only Baseel can view orders
           </Text>
         </View>
       </SafeAreaView>
     );
   }
   
-  // Show all orders for Nazir (admin role)
+  // Show all orders for Baseel (admin role)
   const displayOrders = orders;
   
   console.log('=== ORDERS SCREEN DEBUG ===');

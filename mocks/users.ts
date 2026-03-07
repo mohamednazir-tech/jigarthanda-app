@@ -14,13 +14,13 @@ export const tamilNaduUsers: User[] = [
   },
   {
     id: 'usr_nazir_001',
-    username: 'nazir',
-    password: 'nazir123',
-    name: 'Nazir User',
+    username: 'baseel',
+    password: 'baseel123',
+    name: 'Baseel User',
     district: 'Madurai',
     districtTamil: 'மதுரை',
     role: 'admin',
-    phone: '+91 98765 43211',
+    phone: '+91 9585999581',
     createdAt: new Date('2024-01-15'),
   },
 ];

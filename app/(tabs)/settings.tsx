@@ -20,12 +20,6 @@ export default function SettingsScreen() {
   const { settings, updateSettings } = useOrders();
   const { user, logout } = useAuth();
   const [formData, setFormData] = useState(settings);
-  const [userData, setUserData] = useState({
-    name: user?.name || '',
-    phone: user?.phone || '',
-    district: user?.district || '',
-    districtTamil: user?.districtTamil || ''
-  });
   const [saved, setSaved] = useState(false);
 
   // Check if user can edit settings (admin and staff)
@@ -37,9 +31,6 @@ export default function SettingsScreen() {
     try {
       // Save shop settings
       await updateSettings(formData);
-      
-      // Save user details (for now, just log them)
-      console.log('User details updated:', userData);
       
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -178,68 +169,6 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>User Details</Text>
-
-            <View style={styles.inputGroup}>
-              <View style={styles.inputIcon}>
-                <Ionicons name="person" size={18} color={Colors.primary} />
-              </View>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputLabel}>User Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={userData.name}
-                  onChangeText={(text) => setUserData({ ...userData, name: text })}
-                  editable={canEditSettings}
-                  placeholder="User name"
-                  placeholderTextColor={Colors.textMuted}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <View style={styles.inputIcon}>
-                <Ionicons name="location" size={18} color={Colors.primary} />
-              </View>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputLabel}>User Location</Text>
-                <TextInput
-                  style={styles.input}
-                  value={`${userData.district}, ${userData.districtTamil}`}
-                  onChangeText={(text) => {
-                    const parts = text.split(', ');
-                    setUserData({ 
-                      ...userData, 
-                      district: parts[0] || 'Madurai',
-                      districtTamil: parts[1] || 'மதுரை'
-                    });
-                  }}
-                  editable={canEditSettings}
-                  placeholder="User location"
-                  placeholderTextColor={Colors.textMuted}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <View style={styles.inputIcon}>
-                <Ionicons name="call" size={18} color={Colors.primary} />
-              </View>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputLabel}>User Phone</Text>
-                <TextInput
-                  style={styles.input}
-                  value={userData.phone}
-                  onChangeText={(text) => setUserData({ ...userData, phone: text })}
-                  editable={canEditSettings}
-                  placeholder="Enter phone number"
-                  placeholderTextColor={Colors.textMuted}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            </View>
-          </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Billing Details</Text>

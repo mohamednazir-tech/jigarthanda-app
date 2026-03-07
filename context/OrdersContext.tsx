@@ -29,11 +29,11 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
     loadData();
   }, []);
 
-  // Live orders polling - refresh every 5 seconds ONLY for Nazir
+  // Live orders polling - refresh every 5 seconds ONLY for Baseel
   useEffect(() => {
-    if (user?.id !== 'usr_nazir_001') return; // Only Nazir needs live updates
+    if (user?.id !== 'usr_nazir_001') return; // Only Baseel needs live updates
     
-    console.log('🔄 Starting live orders polling for Nazir...');
+    console.log('🔄 Starting live orders polling for Baseel...');
     
     const pollInterval = setInterval(async () => {
       try {
@@ -43,7 +43,7 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
         if (apiOrders.length > allOrders.length) {
           console.log(`🆕 ${apiOrders.length - allOrders.length} new orders found!`);
           
-          // Play sound alert for Nazir
+          // Play sound alert for Baseel
           if (user?.id === 'usr_nazir_001') {
             try {
               // Use Expo Audio for sound alert
@@ -76,9 +76,9 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
     };
   }, [user?.id]);
 
-  // Daily summary notification for Nazir
+  // Daily summary notification for Baseel
   useEffect(() => {
-    if (user?.role !== 'admin') return; // Only show for Nazir (admin)
+    if (user?.role !== 'admin') return; // Only show for Baseel (admin)
 
     const checkDailySummary = () => {
       const today = new Date();
@@ -202,11 +202,11 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
       return [];
     }
     
-    // Nazir sees all orders, others see only their own
+    // Baseel sees all orders, others see only their own
     if (user?.role === 'admin' || user?.id === 'usr_nazir_001') {
-      console.log('=== NAZIR (ADMIN) DETECTED ===');
+      console.log('=== BASEEL (ADMIN) DETECTED ===');
       console.log('All orders count:', allOrders.length);
-      console.log('Nazir (admin) sees ALL orders');
+      console.log('Baseel (admin) sees ALL orders');
       console.log('Orders by user:', allOrders.reduce((acc: Record<string, number>, order) => {
         acc[order.userId] = (acc[order.userId] || 0) + 1;
         return acc;

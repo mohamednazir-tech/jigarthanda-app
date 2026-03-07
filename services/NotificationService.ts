@@ -27,7 +27,7 @@ export const requestNotificationPermission = async () => {
   return status === 'granted';
 };
 
-// Show order notification for Nazir
+// Show order notification for Baseel
 export const showOrderNotification = async (order: any) => {
   const hasPermission = await requestNotificationPermission();
   
@@ -52,7 +52,7 @@ export const showOrderNotification = async (order: any) => {
   });
 };
 
-// Show daily summary notification for Nazir
+// Show daily summary notification for Baseel
 export const showDailySummaryNotification = async (orderCount: number, totalRevenue: number) => {
   const hasPermission = await requestNotificationPermission();
   

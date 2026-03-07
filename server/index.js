@@ -1,7 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 const { Pool } = require('pg');
 require('dotenv').config();
+
+// Environment safety check
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL missing - server cannot start");
+  process.exit(1);
+}
 
 // Optional cron import for production reliability
 let cron;
@@ -303,7 +310,6 @@ async function sendPushNotificationToBaseel(order) {
     }
 
     // Send push notification via Expo
-    const axios = require('axios');
     const items = typeof order.items === "string"
       ? JSON.parse(order.items)
       : order.items;
@@ -364,7 +370,6 @@ async function sendPushNotificationToUser(order, userId) {
     }
 
     // Send push notification via Expo
-    const axios = require('axios');
     const items = typeof order.items === "string"
       ? JSON.parse(order.items)
       : order.items;
@@ -442,7 +447,6 @@ async function sendDailySummaryToBaseel() {
     }
 
     // Send daily summary notification
-    const axios = require('axios');
     const reportDate = currentDate.toLocaleDateString('en-IN', {
       weekday: 'long',
       day: 'numeric',
@@ -535,39 +539,6 @@ async function deleteOldOrders() {
   }
 }
 
-// Professional cleanup function for scheduling
-async function cleanupOrders() {
-  try {
-    console.log("🗑️ Running automatic order cleanup...");
-    
-    const result = await pool.query(`
-      DELETE FROM orders
-      WHERE createdAt < NOW() - INTERVAL '3 days'
-    `);
-
-    console.log(`✅ Auto-cleanup deleted ${result.rowCount} old orders`);
-  } catch (err) {
-    console.error("❌ Auto-cleanup error:", err);
-  }
-}
-
-// Schedule daily cleanup of old orders at 12:00 AM
-function scheduleOrderCleanup() {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0); // 12:00 AM midnight
-  
-  const msUntilTomorrow = tomorrow - now;
-  
-  console.log(`🗑️ Order cleanup scheduled for: ${tomorrow.toISOString()}`);
-  
-  setTimeout(() => {
-    deleteOldOrders();
-    // Schedule for next day
-    scheduleOrderCleanup();
-  }, msUntilTomorrow);
-}
 
 // Get all orders (database already handles 3-day retention)
 app.get('/api/orders', async (req, res) => {
@@ -957,86 +928,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Settings endpoints for shop management
-app.get('/api/settings', async (req, res) => {
-  try {
-    console.log('=== GET SHOP SETTINGS ===');
-    
-    // Default settings if none exist
-    const defaultSettings = {
-      name: 'Madurai Vilakkuthoon Hanifa Jigarthanda',
-      nameLocal: 'மதுரை விளக்குத்தூண் ஹனிஃபா ஜிகர்தண்டா',
-      address: 'Chennai, Tamil Nadu - 600001',
-      phone: '+91 98765 43210',
-      gstNumber: '33AABCU9603R1ZM',
-    };
-    
-    res.json({ 
-      success: true, 
-      data: defaultSettings
-    });
-  } catch (error) {
-    console.error('❌ Get settings error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.put('/api/settings', async (req, res) => {
-  try {
-    console.log('=== UPDATE SHOP SETTINGS ===');
-    console.log('Settings data:', req.body);
-    
-    const { name, nameLocal, address, phone, gstNumber } = req.body;
-    
-    // Validate required fields
-    if (!name || !nameLocal || !address || !phone) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields: name, nameLocal, address, phone' 
-      });
-    }
-    
-    const updatedSettings = {
-      name: name.trim(),
-      nameLocal: nameLocal.trim(),
-      address: address.trim(),
-      phone: phone.trim(),
-      gstNumber: gstNumber ? gstNumber.trim() : '',
-    };
-    
-    console.log('✅ Settings updated successfully:', updatedSettings);
-    
-    res.json({ 
-      success: true, 
-      message: 'Settings updated successfully',
-      data: updatedSettings
-    });
-  } catch (error) {
-    console.error('❌ Update settings error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT 1');
-    res.json({ 
-      success: true, 
-      status: 'healthy',
-      database: 'connected',
-      version: DEPLOY_VERSION,
-      uptime: process.uptime()
-    });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: 'Database not connected',
-      version: DEPLOY_VERSION,
-      uptime: process.uptime()
-    });
-  }
-});
 
 /* ===========================
    Start Server
@@ -1072,23 +963,19 @@ const startServer = async () => {
       console.log(`🌐 Network: http://10.171.132.69:${PORT}`);
     });
 
-    // Schedule daily cleanup at 12:00 AM (keep old scheduler for cleanup)
-    scheduleOrderCleanup();
-    
-    // Run immediate cleanup on server start (professional behavior)
-    console.log('🧹 Running immediate cleanup on server start...');
-    await cleanupOrders();
-    
-    // Schedule automatic cleanup every 24 hours
-    setInterval(cleanupOrders, 24 * 60 * 60 * 1000); // Run once per day
-    console.log("⏰ Automatic cleanup scheduled every 24 hours");
+  // Schedule daily cleanup using simple interval
+  setInterval(deleteOldOrders, 24 * 60 * 60 * 1000); // Run once per day
+  
+  // Run immediate cleanup on server start (professional behavior)
+  console.log('🧹 Running immediate cleanup on server start...');
+  await deleteOldOrders();
+  
+  console.log("🕐 Daily summary scheduled via cron (12:01 AM daily)");
 
-    console.log("🕐 Daily summary scheduled via cron (12:01 AM daily)");
-
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
+} catch (error) {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+}
 };
 
 startServer();
