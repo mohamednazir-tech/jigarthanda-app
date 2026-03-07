@@ -118,35 +118,25 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
     try {
       setIsLoading(true);
       
-      // Try to load from API first (multi-device support)
+      // ALWAYS load from API for multi-device consistency
+      console.log('=== LOADING ORDERS FROM API (Multi-Device Sync) ===');
       const [apiOrders, apiSettings] = await Promise.all([
         ApiService.getOrders(),
         ApiService.getSettings(),
       ]);
 
-      if (apiOrders.length > 0) {
-        // Use API orders if available
-        console.log('=== LOADING ORDERS FROM API ===');
-        console.log('API Orders count:', apiOrders.length);
-        console.log('API Orders:', apiOrders);
-        
-        setAllOrders(apiOrders.map(order => ({
-          ...order,
-          createdAt: new Date(order.createdAt)
-        })));
-        console.log('Loaded orders from API:', apiOrders.length);
-        
-        // Also save to local storage as backup
-        await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(apiOrders));
-      } else {
-        // Fallback to local storage
-        const storedOrders = await AsyncStorage.getItem(ORDERS_KEY);
-        if (storedOrders) {
-          const parsed = JSON.parse(storedOrders);
-          setAllOrders(parsed.map((o: Order) => ({ ...o, createdAt: new Date(o.createdAt) })));
-          console.log('Loaded orders from local storage:', parsed.length);
-        }
-      }
+      // Always use API orders for multi-device consistency
+      console.log('API Orders count:', apiOrders.length);
+      console.log('API Orders:', apiOrders);
+      
+      setAllOrders(apiOrders.map(order => ({
+        ...order,
+        createdAt: new Date(order.createdAt)
+      })));
+      console.log('Loaded orders from API:', apiOrders.length);
+      
+      // Save to local storage as backup (not primary source)
+      await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(apiOrders));
 
       // Load settings with API support
       if (apiSettings) {
@@ -255,12 +245,8 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
       console.log('Order created:', order);
 
       if (order) {
-        // Update local state
-        const updatedOrders = [...allOrders, order];
-        setAllOrders(updatedOrders);
-        
-        // Save to local storage as backup
-        await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+        // Always refresh from server for multi-device consistency
+        await loadData();
         
         // Show local notification for admin user
         if (user.role === 'staff') {
@@ -397,15 +383,14 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
 
   return {
     orders,
-    allOrders,
-    settings,
-    isLoading,
-    createOrder,
-    updateSettings,
     todayOrders,
     todayTotal,
-    clearAllOrders: clearUserOrders,
+    clearAllOrders,
+    createOrder,
     updateOrderStatus,
-    deleteAllOrders,
+    updateSettings,
+    settings,
+    loadData, // Export loadData for manual refresh
+    isLoading,
   };
 });
