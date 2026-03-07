@@ -313,7 +313,7 @@ async function sendPushNotificationToBaseel(order) {
     const items = typeof order.items === "string"
       ? JSON.parse(order.items)
       : order.items;
-    const itemNames = items.map(item => item.name).slice(0, 3);
+    const itemNames = items.map(i => i.item.name).slice(0, 3);
     const itemsText = itemNames.length > 2 
       ? `${itemNames.join(', ')} + ${items.length - 2} more`
       : itemNames.join(', ');
@@ -373,7 +373,7 @@ async function sendPushNotificationToUser(order, userId) {
     const items = typeof order.items === "string"
       ? JSON.parse(order.items)
       : order.items;
-    const itemNames = items.map(item => item.name).slice(0, 3);
+    const itemNames = items.map(i => i.item.name).slice(0, 3);
     const itemsText = itemNames.length > 2 
       ? `${itemNames.join(', ')} + ${items.length - 2} more`
       : itemNames.join(', ');
