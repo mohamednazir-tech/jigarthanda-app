@@ -90,7 +90,20 @@ export default function OrdersScreen() {
   const { orders, todayOrders, todayTotal, deleteAllOrders, loadData } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
-  // Hide entire Orders page for admin user
+  // Calculate today's cash and UPI totals (must be before early return)
+  const todayCashTotal = useMemo(() => {
+    return todayOrders
+      .filter(order => order.paymentMethod === 'cash')
+      .reduce((sum, order) => sum + Number(order.grandTotal || 0), 0);
+  }, [todayOrders]);
+
+  const todayUpiTotal = useMemo(() => {
+    return todayOrders
+      .filter(order => order.paymentMethod === 'upi')
+      .reduce((sum, order) => sum + Number(order.grandTotal || 0), 0);
+  }, [todayOrders]);
+  
+  // Hide entire Orders page for admin user (after all hooks)
   if (user?.id === 'usr_admin_001') {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -104,19 +117,6 @@ export default function OrdersScreen() {
       </SafeAreaView>
     );
   }
-  
-  // Calculate today's cash and UPI totals
-  const todayCashTotal = useMemo(() => {
-    return todayOrders
-      .filter(order => order.paymentMethod === 'cash')
-      .reduce((sum, order) => sum + Number(order.grandTotal || 0), 0);
-  }, [todayOrders]);
-
-  const todayUpiTotal = useMemo(() => {
-    return todayOrders
-      .filter(order => order.paymentMethod === 'upi')
-      .reduce((sum, order) => sum + Number(order.grandTotal || 0), 0);
-  }, [todayOrders]);
   
   // Hide orders from admin user (staff role) - only show to Baseel (admin role)
   if (user?.role === 'staff') {
