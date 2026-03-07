@@ -191,9 +191,11 @@ export default function OrdersScreen() {
 
       <View style={styles.paymentSummaryCard}>
         <View style={styles.paymentSummaryItem}>
-          <View style={styles.paymentIconContainer}>
-            <Ionicons name="cash" size={24} color="#2ECC71" />
-          </View>
+          {user?.id !== 'usr_admin_001' && (
+            <View style={styles.paymentIconContainer}>
+              <Ionicons name="cash" size={24} color="#2ECC71" />
+            </View>
+          )}
           <View style={styles.paymentDetails}>
             <Text style={styles.paymentLabel}>Cash Payments</Text>
             <Text style={styles.paymentValue}>₹{todayCashTotal.toLocaleString()}</Text>
@@ -201,9 +203,11 @@ export default function OrdersScreen() {
         </View>
         <View style={styles.paymentSummaryDivider} />
         <View style={styles.paymentSummaryItem}>
-          <View style={styles.paymentIconContainer}>
-            <Ionicons name="phone-portrait" size={24} color="#3498DB" />
-          </View>
+          {user?.id !== 'usr_admin_001' && (
+            <View style={styles.paymentIconContainer}>
+              <Ionicons name="phone-portrait" size={24} color="#3498DB" />
+            </View>
+          )}
           <View style={styles.paymentDetails}>
             <Text style={styles.paymentLabel}>UPI Payments</Text>
             <Text style={styles.paymentValue}>₹{todayUpiTotal.toLocaleString()}</Text>
