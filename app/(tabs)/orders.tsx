@@ -87,7 +87,7 @@ const PaymentIcon = Ionicons;
 
 export default function OrdersScreen() {
   const { user } = useAuth();
-  const { orders, todayOrders, todayTotal, clearAllOrders, loadData } = useOrders();
+  const { orders, todayOrders, todayTotal, deleteAllOrders, loadData } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
   // Hide orders from admin user (staff role) - only show to Baseel (admin role)

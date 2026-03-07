@@ -21,10 +21,10 @@ import { useRouter } from "expo-router";
 export default function BillScreen() {
   const router = useRouter();
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  const { orders, allOrders, settings } = useOrders();
+  const { orders, settings } = useOrders();
   const { clearCart } = useCart();
 
-  const order = allOrders.find(o => o.id === orderId);
+  const order = orders.find(o => o.id === orderId);
 
   if (!order) {
     return (

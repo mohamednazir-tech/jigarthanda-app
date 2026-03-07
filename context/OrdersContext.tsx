@@ -3,10 +3,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, CartItem, ShopSettings } from '@/types';
 import { useAuth } from '@/context/AuthContext';
-import CloudSyncService from '@/services/CloudSyncService';
 import { showOrderNotification, showDailySummaryNotification } from '@/services/NotificationService';
 import ApiService from '@/services/ApiService';
-import PushNotificationService from '@/services/PushNotificationService';
 
 const ORDERS_KEY = 'hanifa_orders';
 const SETTINGS_KEY = 'hanifa_settings';
@@ -41,31 +39,30 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
         const apiOrders = await ApiService.getOrders();
         
         // ALWAYS update with server data for multi-device consistency
-        setAllOrders(apiOrders.map(order => ({
-          ...order,
-          createdAt: new Date(order.createdAt)
-        })));
-        
-        if (apiOrders.length > allOrders.length) {
-          console.log(`🆕 ${apiOrders.length - allOrders.length} new orders found!`);
-          
-          // Play sound alert for Baseel
-          if (user?.id === 'usr_nazir_001') {
-            try {
-              // Use Expo Audio for sound alert
-              const { Sound } = await require('expo-av');
-              const soundObject = new Sound.Sound();
-              await soundObject.loadAsync(require('@/assets/sounds/notification.mp3'));
-              await soundObject.playAsync();
-            } catch (error) {
-              console.log('Error playing sound:', error);
+        setAllOrders(prev => {
+          if (apiOrders.length > prev.length) {
+            console.log(`🆕 ${apiOrders.length - prev.length} new orders found!`);
+            
+            // Play sound alert for Baseel
+            if (user?.id === 'usr_nazir_001') {
+              (async () => {
+                try {
+                  // Use Expo Audio for sound alert
+                  const { Sound } = await require('expo-av');
+                  const soundObject = new Sound.Sound();
+                  await soundObject.loadAsync(require('@/assets/sounds/notification.mp3'));
+                  await soundObject.playAsync();
+                } catch (error) {
+                  console.log('Error playing sound:', error);
+                }
+              })();
             }
           }
-          setAllOrders(apiOrders.map(order => ({
+          return apiOrders.map(order => ({
             ...order,
             createdAt: new Date(order.createdAt)
-          })));
-        }
+          }));
+        });
       } catch (error) {
         console.error('❌ Polling error:', error);
       }
@@ -245,7 +242,10 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
       console.log('Order created:', order);
 
       if (order) {
-        // Always refresh from server for multi-device consistency
+        // Show order instantly for better UX
+        setAllOrders(prev => [...prev, order]);
+        
+        // Then refresh from server for multi-device consistency
         await loadData();
         
         // Show local notification for admin user
@@ -264,7 +264,7 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
       console.error('Error message:', (error as Error).message);
       return null;
     }
-  }, [user, allOrders]);
+  }, [user]);
 
   // Sync all orders to cloud - Temporarily disabled
   const syncAllOrders = useCallback(async () => {
@@ -385,7 +385,7 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
     orders,
     todayOrders,
     todayTotal,
-    clearAllOrders,
+    deleteAllOrders,
     createOrder,
     updateOrderStatus,
     updateSettings,
