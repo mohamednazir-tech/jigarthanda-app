@@ -116,7 +116,12 @@ const createTables = async () => {
     );
 
     await pool.query(
-      'CREATE TABLE IF NOT EXISTS user_devices (id SERIAL PRIMARY KEY, userId VARCHAR(50) NOT NULL, token TEXT NOT NULL, platform VARCHAR(20) NOT NULL, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(userId, token))'
+      'CREATE TABLE IF NOT EXISTS user_devices (id SERIAL PRIMARY KEY, userId VARCHAR(50) NOT NULL, token TEXT NOT NULL, platform VARCHAR(20) NOT NULL, isActive BOOLEAN DEFAULT false, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(userId, token))'
+    );
+
+    // Add isActive column to existing tables (migration)
+    await pool.query(
+      'ALTER TABLE user_devices ADD COLUMN IF NOT EXISTS isActive BOOLEAN DEFAULT false'
     );
 
     // Enable RLS on user_devices table
@@ -306,16 +311,16 @@ app.post('/api/orders', async (req, res) => {
 // Send push notification to Baseel
 async function sendPushNotificationToBaseel(order) {
   try {
-    // Get Baseel's device tokens
+    // Get Baseel's ACTIVE device token only
     const devicesResponse = await pool.query(
-      'SELECT token FROM user_devices WHERE userId = $1',
+      'SELECT token FROM user_devices WHERE userId = $1 AND isActive = true',
       ['usr_nazir_001'] // Baseel user ID
     );
 
     const tokens = devicesResponse.rows.map(row => row.token);
 
     if (tokens.length === 0) {
-      console.log('No devices found for Baseel');
+      console.log('No active device found for Baseel');
       return;
     }
 
@@ -372,9 +377,9 @@ async function sendPushNotificationToBaseel(order) {
 // Send push notification to the user who created the order
 async function sendPushNotificationToUser(order, userId) {
   try {
-    // Get user's device tokens
+    // Get user's ACTIVE device token only
     const devicesResponse = await pool.query(
-      'SELECT token FROM user_devices WHERE userId = $1',
+      'SELECT token FROM user_devices WHERE userId = $1 AND isActive = true',
       [userId]
     );
 
@@ -455,9 +460,9 @@ async function sendDailySummaryToBaseel() {
       0
     );
 
-    // Get Baseel's device tokens
+    // Get Baseel's ACTIVE device token only
     const devicesResponse = await pool.query(
-      'SELECT token FROM user_devices WHERE userId = $1',
+      'SELECT token FROM user_devices WHERE userId = $1 AND isActive = true',
       ['usr_nazir_001']
     );
 
@@ -748,7 +753,7 @@ app.post('/api/register-device', async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO user_devices (userId, token, platform) VALUES ($1, $2, $3) ON CONFLICT (userId, token) DO NOTHING',
+      'INSERT INTO user_devices (userId, token, platform, isActive) VALUES ($1, $2, $3, false) ON CONFLICT (userId, token) DO UPDATE SET platform = EXCLUDED.platform, isActive = EXCLUDED.isActive',
       [userId, token, platform]
     );
 
@@ -955,6 +960,100 @@ app.delete('/api/orders/all', async (req, res) => {
   }
 });
 
+// Combined login-device API (register + activate in one call)
+app.post('/api/login-device', async (req, res) => {
+  try {
+    const { userId, token, platform } = req.body;
+
+    if (!userId || !token) {
+      return res.status(400).json({ success: false, message: 'Missing userId or token' });
+    }
+
+    // Deactivate all devices for this user
+    await pool.query(
+      'UPDATE user_devices SET isActive = false WHERE userId = $1',
+      [userId]
+    );
+
+    // Register/Update and activate this device
+    await pool.query(
+      `INSERT INTO user_devices (userId, token, platform, isActive) 
+       VALUES ($1, $2, $3, true) 
+       ON CONFLICT (userId, token) 
+       DO UPDATE SET platform = EXCLUDED.platform, isActive = true`,
+      [userId, token, platform]
+    );
+
+    console.log(`✅ Device logged in and activated for user ${userId}: ${token.slice(-10)}`);
+    res.json({ 
+      success: true, 
+      message: 'Device logged in and activated as active device' 
+    });
+
+  } catch (error) {
+    console.error('❌ Login device error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Set active device for user
+app.post('/api/set-active-device', async (req, res) => {
+  try {
+    const { userId, token } = req.body;
+
+    if (!userId || !token) {
+      return res.status(400).json({ success: false, message: 'Missing userId or token' });
+    }
+
+    // Deactivate all devices for this user
+    await pool.query(
+      'UPDATE user_devices SET isActive = false WHERE userId = $1',
+      [userId]
+    );
+
+    // Activate only this device
+    await pool.query(
+      'UPDATE user_devices SET isActive = true WHERE userId = $1 AND token = $2',
+      [userId, token]
+    );
+
+    console.log(`✅ Active device set for user ${userId}: ${token.slice(-10)}`);
+    res.json({ success: true, message: 'Active device updated' });
+
+  } catch (error) {
+    console.error('❌ Set active device error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get active device for user
+app.get('/api/active-device/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const result = await pool.query(
+      'SELECT token FROM user_devices WHERE userId = $1 AND isActive = true',
+      [userId]
+    );
+
+    if (result.rows.length > 0) {
+      res.json({ 
+        success: true, 
+        activeToken: result.rows[0].token 
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        message: 'No active device found' 
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Get active device error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Manual daily summary test endpoint
 app.post('/api/test-daily-summary', async (req, res) => {
   try {
@@ -1006,7 +1105,12 @@ app.get('/', (req, res) => {
       paymentSummary: '/api/orders/payment-summary',
       orderStatus: '/api/orders/:id/status',
       settings: '/api/settings',
-      health: '/api/health'
+      health: '/api/health',
+      registerDevice: '/api/register-device',
+      loginDevice: '/api/login-device',
+      setActiveDevice: '/api/set-active-device',
+      activeDevice: '/api/active-device/:userId',
+      testDailySummary: '/api/test-daily-summary'
     },
     status: 'production-ready',
     documentation: 'https://github.com/mohamednazir-tech/jigarthanda-app'
