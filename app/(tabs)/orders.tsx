@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -90,6 +90,19 @@ export default function OrdersScreen() {
   const { orders, todayOrders, todayTotal, deleteAllOrders, loadData } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
+  // Calculate today's cash and UPI totals
+  const todayCashTotal = useMemo(() => {
+    return todayOrders
+      .filter(order => order.paymentMethod === 'cash')
+      .reduce((sum, order) => sum + Number(order.grandTotal || 0), 0);
+  }, [todayOrders]);
+
+  const todayUpiTotal = useMemo(() => {
+    return todayOrders
+      .filter(order => order.paymentMethod === 'upi')
+      .reduce((sum, order) => sum + Number(order.grandTotal || 0), 0);
+  }, [todayOrders]);
+  
   // Hide orders from admin user (staff role) - only show to Baseel (admin role)
   if (user?.role === 'staff') {
     return (
@@ -173,6 +186,28 @@ export default function OrdersScreen() {
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Today&apos;s Revenue</Text>
           <Text style={styles.summaryValueGold}>₹{todayTotal.toLocaleString()}</Text>
+        </View>
+      </View>
+
+      <View style={styles.paymentSummaryCard}>
+        <View style={styles.paymentSummaryItem}>
+          <View style={styles.paymentIconContainer}>
+            <Ionicons name="cash" size={16} color={Colors.primary} />
+          </View>
+          <View style={styles.paymentDetails}>
+            <Text style={styles.paymentLabel}>Cash Payments</Text>
+            <Text style={styles.paymentValue}>₹{todayCashTotal.toLocaleString()}</Text>
+          </View>
+        </View>
+        <View style={styles.paymentSummaryDivider} />
+        <View style={styles.paymentSummaryItem}>
+          <View style={styles.paymentIconContainer}>
+            <Ionicons name="phone-portrait" size={16} color={Colors.primary} />
+          </View>
+          <View style={styles.paymentDetails}>
+            <Text style={styles.paymentLabel}>UPI Payments</Text>
+            <Text style={styles.paymentValue}>₹{todayUpiTotal.toLocaleString()}</Text>
+          </View>
         </View>
       </View>
 
@@ -306,6 +341,51 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700' as const,
     color: Colors.gold,
+  },
+  paymentSummaryCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  paymentSummaryItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  paymentIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: Colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paymentDetails: {
+    flex: 1,
+  },
+  paymentLabel: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginBottom: 4,
+  },
+  paymentValue: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.primary,
+  },
+  paymentSummaryDivider: {
+    width: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: 16,
   },
   monthlyReportToggle: {
     flexDirection: 'row',
