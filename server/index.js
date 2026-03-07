@@ -33,6 +33,9 @@ const PORT = process.env.PORT || 3000;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL, // ✅ Supabase connection
+  max: 20, // Maximum number of connections
+  idleTimeoutMillis: 30000, // Close idle connections after 30s
+  connectionTimeoutMillis: 2000, // Return error after 2s if can't connect
 });
 
 // Test DB connection
@@ -128,7 +131,14 @@ const createTables = async () => {
       CREATE INDEX IF NOT EXISTS idx_orders_createdat 
       ON orders (createdAt DESC)
     `);
-    console.log('✅ Performance index created for orders.createdAt');
+    
+    // Create compound index for optimized orders query
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_createdat_status 
+      ON orders (createdAt DESC, status)
+    `);
+    
+    console.log('✅ Performance indexes created for orders');
 
     console.log('✅ Tables ready');
   } catch (error) {
@@ -543,6 +553,7 @@ async function deleteOldOrders() {
 // Get all orders (database already handles 3-day retention)
 app.get('/api/orders', async (req, res) => {
   try {
+    const startTime = Date.now();
     console.log('=== GET ORDERS REQUEST ===');
     
     // Support pagination for future scalability
@@ -555,7 +566,7 @@ app.get('/api/orders', async (req, res) => {
 
     console.log(`📊 Pagination: limit=${safeLimit}, offset=${safeOffset}`);
     
-    // Use explicit columns for production API (safer than SELECT *)
+    // Optimized query with better indexing
     const result = await pool.query(`
       SELECT 
         id,
@@ -570,17 +581,34 @@ app.get('/api/orders', async (req, res) => {
         status,
         createdAt
       FROM orders 
+      WHERE createdAt >= NOW() - INTERVAL '3 days'
       ORDER BY createdAt DESC 
       LIMIT $1 OFFSET $2
     `, [safeLimit, safeOffset]);
 
-    console.log(`📊 Returning ${result.rows.length} orders (database already limited to 3 days)`);
+    console.log(`📊 Query executed in ${Date.now() - startTime}ms`);
+    console.log(`📊 Returning ${result.rows.length} orders`);
 
-    const orders = result.rows.map(row => ({
-      ...row,
-      items: typeof row.items === "string" ? JSON.parse(row.items) : row.items,
-      status: row.status || 'pending',
-    }));
+    // Optimize JSON parsing - batch processing
+    const orders = result.rows.map(row => {
+      try {
+        return {
+          ...row,
+          items: typeof row.items === "string" ? JSON.parse(row.items) : row.items,
+          status: row.status || 'pending',
+        };
+      } catch (error) {
+        console.error('❌ JSON parse error for order:', row.id);
+        return {
+          ...row,
+          items: [],
+          status: row.status || 'pending',
+        };
+      }
+    });
+
+    const totalTime = Date.now() - startTime;
+    console.log(`📊 Total API time: ${totalTime}ms`);
 
     res.json({ 
       success: true, 
@@ -588,7 +616,8 @@ app.get('/api/orders', async (req, res) => {
       pagination: {
         limit: safeLimit,
         offset: safeOffset,
-        count: result.rows.length
+        count: result.rows.length,
+        responseTime: totalTime
       }
     });
   } catch (error) {
