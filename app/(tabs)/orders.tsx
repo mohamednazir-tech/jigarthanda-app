@@ -90,6 +90,21 @@ export default function OrdersScreen() {
   const { orders, todayOrders, todayTotal, deleteAllOrders, loadData } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
+  // Hide entire Orders page for admin user
+  if (user?.id === 'usr_admin_001') {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.accessDenied}>
+          <Ionicons name="receipt" size={64} color={Colors.border} />
+          <Text style={styles.accessDeniedTitle}>Orders Management</Text>
+          <Text style={styles.accessDeniedText}>
+            Admin users access orders through backend dashboard
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
   // Calculate today's cash and UPI totals
   const todayCashTotal = useMemo(() => {
     return todayOrders
