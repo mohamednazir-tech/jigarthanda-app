@@ -335,25 +335,31 @@ async function sendPushNotificationToBaseel(order) {
     });
     
     for (const token of tokens) {
-      await axios.post(
-        'https://exp.host/--/api/v2/push/send',
-        {
-          to: token,
-          sound: 'default',
-          title: '🔔 NEW ORDER RECEIVED',
-          body: `📋 Order #${order.id.slice(-6)}\n🍹 ${itemsText}\n💰 ₹${order.total}\n🕐 ${orderTime}`,
-          data: { 
-            orderId: order.id,
-            type: 'new_order',
-            screen: 'orders',
-            priority: 'urgent'
+      try {
+        await axios.post(
+          'https://exp.host/--/api/v2/push/send',
+          {
+            to: token,
+            sound: 'default',
+            title: '🔔 NEW ORDER RECEIVED',
+            body: `📋 Order #${order.id.slice(-6)}\n🍹 ${itemsText}\n💰 ₹${order.total}\n🕐 ${orderTime}`,
+            data: { 
+              orderId: order.id,
+              type: 'new_order',
+              screen: 'orders',
+              priority: 'urgent'
+            },
+            priority: 'high',
+            badge: 1,
+            channelId: 'orders'
           },
-          priority: 'high',
-          badge: 1,
-          channelId: 'orders'
-        },
-        { timeout: 5000 }
-      );
+          { timeout: 5000 }
+        );
+        console.log(`✅ Push notification sent to device: ${token.slice(-10)}`);
+      } catch (error) {
+        console.error(`❌ Push failed for device ${token.slice(-10)}:`, error.message);
+        // Continue with other devices
+      }
     }
 
     console.log('✅ Push notification sent to Baseel devices:', tokens.length);
@@ -395,25 +401,31 @@ async function sendPushNotificationToUser(order, userId) {
     });
 
     for (const token of tokens) {
-      await axios.post(
-        'https://exp.host/--/api/v2/push/send',
-        {
-          to: token,
-          sound: 'default',
-          title: '✅ ORDER CONFIRMED',
-          body: `🧾 Order #${order.id.slice(-6)}\n🍹 ${itemsText}\n💰 Total: ₹${order.total}\n🕐 ${orderTime}\n\n🎉 Ready for pickup!`,
-          data: { 
-            orderId: order.id,
-            type: 'order_confirmed',
-            screen: 'orders',
-            priority: 'normal'
+      try {
+        await axios.post(
+          'https://exp.host/--/api/v2/push/send',
+          {
+            to: token,
+            sound: 'default',
+            title: '✅ ORDER CONFIRMED',
+            body: `🧾 Order #${order.id.slice(-6)}\n🍹 ${itemsText}\n💰 Total: ₹${order.total}\n🕐 ${orderTime}\n\n🎉 Ready for pickup!`,
+            data: { 
+              orderId: order.id,
+              type: 'order_confirmed',
+              screen: 'orders',
+              priority: 'normal'
+            },
+            priority: 'high',
+            badge: 1,
+            channelId: 'confirmations'
           },
-          priority: 'high',
-          badge: 1,
-          channelId: 'confirmations'
-        },
-        { timeout: 5000 }
-      );
+          { timeout: 5000 }
+        );
+        console.log(`✅ User notification sent to device: ${token.slice(-10)}`);
+      } catch (error) {
+        console.error(`❌ User push failed for device ${token.slice(-10)}:`, error.message);
+        // Continue with other devices
+      }
     }
 
     console.log(`✅ Push notification sent to user ${userId}:`, tokens.length);
@@ -439,7 +451,7 @@ async function sendDailySummaryToBaseel() {
     const todayOrders = ordersResult.rows;
     const totalOrders = todayOrders.length;
     const totalSales = todayOrders.reduce(
-      (sum, order) => sum + Number(order.grandtotal || 0),
+      (sum, order) => sum + Number(order.grandTotal || 0),
       0
     );
 
@@ -466,26 +478,32 @@ async function sendDailySummaryToBaseel() {
     const summaryMessage = `📊 DAILY SALES REPORT\n📅 ${reportDate}\n\n🛒 Total Orders: ${totalOrders}\n💰 Total Revenue: ₹${totalSales.toLocaleString()}\n📈 Avg per Order: ₹${totalOrders > 0 ? Math.round(totalSales / totalOrders) : 0}\n\n🎯 Great job today!`;
 
     for (const token of tokens) {
-      await axios.post(
-        'https://exp.host/--/api/v2/push/send',
-        {
-          to: token,
-          sound: 'default',
-          title: '📈 DAILY REPORT READY',
-          body: summaryMessage,
-          data: { 
-            type: 'daily_summary',
-            totalOrders,
-            totalSales,
-            date: currentDate.toISOString().split('T')[0],
-            reportType: 'daily'
+      try {
+        await axios.post(
+          'https://exp.host/--/api/v2/push/send',
+          {
+            to: token,
+            sound: 'default',
+            title: '📈 DAILY REPORT READY',
+            body: summaryMessage,
+            data: { 
+              type: 'daily_summary',
+              totalOrders,
+              totalSales,
+              date: currentDate.toISOString().split('T')[0],
+              reportType: 'daily'
+            },
+            priority: 'high',
+            badge: 1,
+            channelId: 'reports'
           },
-          priority: 'high',
-          badge: 1,
-          channelId: 'reports'
-        },
-        { timeout: 5000 }
-      );
+          { timeout: 5000 }
+        );
+        console.log(`✅ Daily summary sent to device: ${token.slice(-10)}`);
+      } catch (error) {
+        console.error(`❌ Daily summary failed for device ${token.slice(-10)}:`, error.message);
+        // Continue with other devices
+      }
     }
 
     console.log(`✅ Daily summary sent to Baseel: ${totalOrders} orders, ₹${totalSales}`);
@@ -1015,6 +1033,19 @@ const startServer = async () => {
   await deleteOldOrders();
   
   console.log("🕐 Daily summary scheduled via cron (12:01 AM daily)");
+
+    // Backup trigger for Render sleep issues - check if daily summary missed
+    setTimeout(async () => {
+      console.log("🔔 Checking for missed daily summary (backup trigger)...");
+      const now = new Date();
+      const lastRun = new Date();
+      lastRun.setHours(0, 1, 0, 0); // 12:01 AM today
+      
+      if (now.getHours() >= 1 && now.getHours() < 23) {
+        console.log("📅 Server woke up after 12:01 AM - sending missed daily summary");
+        await sendDailySummaryToBaseel();
+      }
+    }, 60000); // Check 1 minute after start
 
 } catch (error) {
   console.error('❌ Failed to start server:', error);
