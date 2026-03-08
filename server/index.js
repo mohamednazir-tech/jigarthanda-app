@@ -207,8 +207,8 @@ app.post('/api/orders/sync', async (req, res) => {
 
 // Cached user roles for performance and security
 const userRoles = {
-  "usr_admin_001": "staff",
-  "usr_nazir_001": "admin"
+  "usr_admin_001": "admin",
+  "usr_nazir_001": "staff"
 };
 
 // Create Order with Push Notification - v2.3 (Fixed query params - 2026-03-04-19:40)
@@ -286,7 +286,7 @@ app.post('/api/orders', async (req, res) => {
         console.log('🔔 Staff user created order - sending notification to Baseel');
         await sendPushNotificationToBaseel(order);
       } else {
-        console.log('👤 Admin user created order - no notification needed');
+        console.log('👤 Admin user created order - no notification to Baseel (admin manages orders directly)');
       }
 
       // Send confirmation to user
