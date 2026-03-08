@@ -1087,6 +1087,141 @@ app.get('/api/active-device/:userId', async (req, res) => {
   }
 });
 
+// Debug Baseel notifications - comprehensive check
+app.get('/api/debug-baseel-notifications', async (req, res) => {
+  try {
+    console.log('🔍 DEBUGGING BASEEL NOTIFICATIONS...');
+    
+    // 1. Check Baseel's user role
+    const baseelRole = userRoles['usr_nazir_001'];
+    console.log('👤 Baseel user role:', baseelRole);
+    
+    // 2. Check all Baseel devices
+    const allDevicesResult = await pool.query(
+      'SELECT token, platform, isActive, createdAt FROM user_devices WHERE userId = $1 ORDER BY createdAt DESC',
+      ['usr_nazir_001']
+    );
+    
+    // 3. Check active devices only
+    const activeDevicesResult = await pool.query(
+      'SELECT token, platform, isActive, createdAt FROM user_devices WHERE userId = $1 AND isActive = true',
+      ['usr_nazir_001']
+    );
+    
+    // 4. Get today's orders created by Baseel
+    const baseelOrdersResult = await pool.query(
+      'SELECT id, createdAt, createdByName FROM orders WHERE userId = $1 AND createdAt >= CURRENT_DATE ORDER BY createdAt DESC',
+      ['usr_nazir_001']
+    );
+    
+    // 5. Get today's orders created by staff (should trigger notifications)
+    const staffOrdersResult = await pool.query(
+      'SELECT id, createdAt, createdByName FROM orders WHERE userId != $1 AND createdAt >= CURRENT_DATE ORDER BY createdAt DESC',
+      ['usr_admin_001']
+    );
+    
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      baseelUserInfo: {
+        userId: 'usr_nazir_001',
+        role: baseelRole,
+        shouldReceiveNotifications: baseelRole === 'staff'
+      },
+      deviceInfo: {
+        allDevices: allDevicesResult.rows.map(row => ({
+          token: row.token ? row.token.slice(-10) + '...' : 'NULL',
+          platform: row.platform,
+          isActive: row.isactive,
+          registeredAt: row.createdat
+        })),
+        activeDevices: activeDevicesResult.rows.map(row => ({
+          token: row.token ? row.token.slice(-10) + '...' : 'NULL',
+          platform: row.platform,
+          isActive: row.isactive,
+          registeredAt: row.createdat
+        })),
+        hasActiveDevice: activeDevicesResult.rows.length > 0
+      },
+      orderInfo: {
+        baseelOrdersToday: baseelOrdersResult.rows.length,
+        staffOrdersToday: staffOrdersResult.rows.length,
+        baseelOrders: baseelOrdersResult.rows.map(row => ({
+          id: row.id.slice(-6),
+          createdBy: row.createdbyname,
+          createdAt: row.createdat
+        })),
+        staffOrders: staffOrdersResult.rows.map(row => ({
+          id: row.id.slice(-6),
+          createdBy: row.createdbyname,
+          createdAt: row.createdat
+        }))
+      },
+      notificationLogic: {
+        staffCreatesOrder: baseelRole === 'staff' ? 'Baseel gets notification ✅' : 'Baseel NO notification ❌',
+        adminCreatesOrder: 'Admin manages directly - no notification to Baseel ✅'
+      },
+      recommendations: []
+    };
+    
+    // Add recommendations based on findings
+    if (!debugInfo.deviceInfo.hasActiveDevice) {
+      debugInfo.recommendations.push('❌ Baseel has NO active devices - needs to login to register/activate device');
+    }
+    
+    if (debugInfo.deviceInfo.activeDevices.length === 0 && debugInfo.deviceInfo.allDevices.length > 0) {
+      debugInfo.recommendations.push('⚠️ Baseel has devices but none are active - needs to login again');
+    }
+    
+    if (debugInfo.orderInfo.staffOrdersToday > 0 && debugInfo.deviceInfo.hasActiveDevice) {
+      debugInfo.recommendations.push('✅ Staff orders created today and Baseel has active device - notifications should work');
+    }
+    
+    if (debugInfo.orderInfo.baseelOrdersToday > 0) {
+      debugInfo.recommendations.push('ℹ️ Baseel created orders today - Baseel gets confirmation notifications (not new order notifications)');
+    }
+    
+    console.log('🔍 DEBUG INFO:', JSON.stringify(debugInfo, null, 2));
+    
+    res.json({
+      success: true,
+      debug: debugInfo
+    });
+    
+  } catch (error) {
+    console.error('❌ Debug endpoint error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Manual test notification to Baseel
+app.post('/api/test-baseel-notification', async (req, res) => {
+  try {
+    console.log('🧪 TESTING BASEEL NOTIFICATION...');
+    
+    // Create a test order
+    const testOrder = {
+      id: `TEST${Date.now()}`,
+      items: [{ item: { name: 'Test Jigarthanda' }, quantity: 1, price: 50 }],
+      total: 50,
+      grandTotal: 50,
+      createdAt: new Date()
+    };
+    
+    // Send notification to Baseel
+    await sendPushNotificationToBaseel(testOrder);
+    
+    res.json({
+      success: true,
+      message: 'Test notification sent to Baseel',
+      testOrder: testOrder
+    });
+    
+  } catch (error) {
+    console.error('❌ Test notification error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Manual daily summary test endpoint
 app.post('/api/test-daily-summary', async (req, res) => {
   try {
@@ -1143,6 +1278,8 @@ app.get('/', (req, res) => {
       loginDevice: '/api/login-device',
       setActiveDevice: '/api/set-active-device',
       activeDevice: '/api/active-device/:userId',
+      debugBaseel: '/api/debug-baseel-notifications',
+      testBaseelNotification: '/api/test-baseel-notification',
       testDailySummary: '/api/test-daily-summary'
     },
     status: 'production-ready',
