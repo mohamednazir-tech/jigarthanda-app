@@ -324,7 +324,8 @@ async function sendPushNotificationToBaseel(order) {
       return;
     }
 
-    // Send push notification via Expo
+    // Send push notifications to ALL devices in PARALLEL for better performance
+    // Prepare notification data once
     const items = typeof order.items === "string"
       ? JSON.parse(order.items)
       : order.items;
@@ -338,8 +339,8 @@ async function sendPushNotificationToBaseel(order) {
       hour: '2-digit', 
       minute: '2-digit' 
     });
-    
-    for (const token of tokens) {
+
+    const notificationPromises = tokens.map(async (token) => {
       try {
         await axios.post(
           'https://exp.host/--/api/v2/push/send',
@@ -361,11 +362,21 @@ async function sendPushNotificationToBaseel(order) {
           { timeout: 5000 }
         );
         console.log(`✅ Push notification sent to device: ${token.slice(-10)}`);
+        return { success: true, token: token.slice(-10) };
       } catch (error) {
         console.error(`❌ Push failed for device ${token.slice(-10)}:`, error.message);
-        // Continue with other devices
+        return { success: false, token: token.slice(-10), error: error.message };
       }
-    }
+    });
+
+    // Wait for ALL notifications to complete in parallel
+    const results = await Promise.allSettled(notificationPromises);
+    
+    // Log results summary
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.filter(r => r.status === 'rejected' || !r.value.success).length;
+    
+    console.log(`📊 Parallel notification results: ${successful} successful, ${failed} failed`);
 
     console.log('✅ Push notification sent to Baseel devices:', tokens.length);
 
@@ -390,23 +401,24 @@ async function sendPushNotificationToUser(order, userId) {
       return;
     }
 
-    // Send push notification via Expo
-    const items = typeof order.items === "string"
-      ? JSON.parse(order.items)
-      : order.items;
-    const itemNames = items.map(i => i.item.name).slice(0, 3);
-    const itemsText = itemNames.length > 2 
-      ? `${itemNames.join(', ')} + ${items.length - 2} more`
-      : itemNames.join(', ');
-
-    // Professional confirmation formatting
-    const orderTime = new Date().toLocaleTimeString('en-IN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-
-    for (const token of tokens) {
+    // Send push notifications to ALL devices in PARALLEL for better performance
+    const notificationPromises = tokens.map(async (token) => {
       try {
+        // Prepare notification data once
+        const items = typeof order.items === "string"
+          ? JSON.parse(order.items)
+          : order.items;
+        const itemNames = items.map(i => i.item.name).slice(0, 3);
+        const itemsText = itemNames.length > 2 
+          ? `${itemNames.join(', ')} + ${items.length - 2} more`
+          : itemNames.join(', ');
+
+        // Professional confirmation formatting
+        const orderTime = new Date().toLocaleTimeString('en-IN', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+
         await axios.post(
           'https://exp.host/--/api/v2/push/send',
           {
@@ -427,11 +439,21 @@ async function sendPushNotificationToUser(order, userId) {
           { timeout: 5000 }
         );
         console.log(`✅ User notification sent to device: ${token.slice(-10)}`);
+        return { success: true, token: token.slice(-10) };
       } catch (error) {
         console.error(`❌ User push failed for device ${token.slice(-10)}:`, error.message);
-        // Continue with other devices
+        return { success: false, token: token.slice(-10), error: error.message };
       }
-    }
+    });
+
+    // Wait for ALL notifications to complete in parallel
+    const results = await Promise.allSettled(notificationPromises);
+    
+    // Log results summary
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.filter(r => r.status === 'rejected' || !r.value.success).length;
+    
+    console.log(`📊 User notification parallel results: ${successful} successful, ${failed} failed`);
 
     console.log(`✅ Push notification sent to user ${userId}:`, tokens.length);
 
@@ -482,7 +504,8 @@ async function sendDailySummaryToBaseel() {
     
     const summaryMessage = `📊 DAILY SALES REPORT\n📅 ${reportDate}\n\n🛒 Total Orders: ${totalOrders}\n💰 Total Revenue: ₹${totalSales.toLocaleString()}\n📈 Avg per Order: ₹${totalOrders > 0 ? Math.round(totalSales / totalOrders) : 0}\n\n🎯 Great job today!`;
 
-    for (const token of tokens) {
+    // Send daily summary notifications to ALL devices in PARALLEL for better performance
+    const notificationPromises = tokens.map(async (token) => {
       try {
         await axios.post(
           'https://exp.host/--/api/v2/push/send',
@@ -505,11 +528,21 @@ async function sendDailySummaryToBaseel() {
           { timeout: 5000 }
         );
         console.log(`✅ Daily summary sent to device: ${token.slice(-10)}`);
+        return { success: true, token: token.slice(-10) };
       } catch (error) {
         console.error(`❌ Daily summary failed for device ${token.slice(-10)}:`, error.message);
-        // Continue with other devices
+        return { success: false, token: token.slice(-10), error: error.message };
       }
-    }
+    });
+
+    // Wait for ALL notifications to complete in parallel
+    const results = await Promise.allSettled(notificationPromises);
+    
+    // Log results summary
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.filter(r => r.status === 'rejected' || !r.value.success).length;
+    
+    console.log(`📊 Daily summary parallel results: ${successful} successful, ${failed} failed`);
 
     console.log(`✅ Daily summary sent to Baseel: ${totalOrders} orders, ₹${totalSales}`);
 
