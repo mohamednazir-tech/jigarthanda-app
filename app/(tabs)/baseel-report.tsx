@@ -2,6 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import Colors from '../../constants/colors';
 
+// Icon components using text emojis
+const Icons = {
+  chart: '📊',
+  money: '💰',
+  trendingUp: '📈',
+  trendingDown: '📉',
+  fire: '🔥',
+  clock: '🕒',
+  morning: '🌅',
+  afternoon: '☀️',
+  evening: '🌆',
+  night: '🌙',
+  trophy: '🏆',
+  alert: '📢',
+  target: '🎯',
+  rocket: '🚀',
+  lightbulb: '💡',
+  star: '⭐',
+  package: '📦',
+  cart: '🛒',
+  receipt: '🧾',
+  coins: '🪙',
+  crown: '👑',
+};
+
 interface SalesReport {
   timestamp: string;
   date: string;
@@ -95,32 +120,32 @@ export default function BaseelReportScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📊 Baseel Sales Report</Text>
+        <Text style={styles.headerTitle}>{Icons.chart} Baseel Sales Report</Text>
         <Text style={styles.headerDate}>{report.date}</Text>
       </View>
 
       {/* Summary Cards */}
       <View style={styles.summarySection}>
-        <Text style={styles.sectionTitle}>📈 Today's Summary</Text>
+        <Text style={styles.sectionTitle}>{Icons.money} {Icons.trendingUp} Today's Summary</Text>
         
         <View style={styles.summaryGrid}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total Orders</Text>
+            <Text style={styles.summaryLabel}>{Icons.receipt} Orders</Text>
             <Text style={styles.summaryValue}>{report.summary.totalOrders}</Text>
           </View>
           
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total Revenue</Text>
+            <Text style={styles.summaryLabel}>{Icons.coins} Revenue</Text>
             <Text style={styles.summaryValue}>{formatCurrency(report.summary.totalRevenue)}</Text>
           </View>
           
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Avg Order Value</Text>
+            <Text style={styles.summaryLabel}>{Icons.cart} Avg Order</Text>
             <Text style={styles.summaryValue}>{formatCurrency(report.summary.avgOrderValue)}</Text>
           </View>
           
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Peak Time</Text>
+            <Text style={styles.summaryLabel}>{Icons.clock} Peak Time</Text>
             <Text style={styles.summaryValue}>{report.summary.peakTime}</Text>
           </View>
         </View>
@@ -128,29 +153,29 @@ export default function BaseelReportScreen() {
 
       {/* Time Analysis */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🕐 Sales by Time</Text>
+        <Text style={styles.sectionTitle}>{Icons.clock} Sales by Time</Text>
         
         <View style={styles.timeGrid}>
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>🌅 Morning</Text>
+            <Text style={styles.timeLabel}>{Icons.morning} Morning</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.morning.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.morning.percentage}%</Text>
           </View>
           
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>☀️ Afternoon</Text>
+            <Text style={styles.timeLabel}>{Icons.afternoon} Afternoon</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.afternoon.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.afternoon.percentage}%</Text>
           </View>
           
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>🌆 Evening</Text>
+            <Text style={styles.timeLabel}>{Icons.evening} Evening</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.evening.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.evening.percentage}%</Text>
           </View>
           
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>🌙 Night</Text>
+            <Text style={styles.timeLabel}>{Icons.night} Night</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.night.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.night.percentage}%</Text>
           </View>
@@ -159,7 +184,7 @@ export default function BaseelReportScreen() {
 
       {/* High Sale Items */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔥 Top Performing Items</Text>
+        <Text style={styles.sectionTitle}>{Icons.fire} Top Performing Items</Text>
         
         {report.highSaleItems.map((item, index) => (
           <View key={item.name} style={styles.itemCard}>
@@ -193,7 +218,7 @@ export default function BaseelReportScreen() {
 
       {/* Low Sale Items */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📉 Low Performing Items</Text>
+        <Text style={styles.sectionTitle}>{Icons.trendingDown} Low Performing Items</Text>
         
         {report.lowSaleItems.map((item, index) => (
           <View key={item.name} style={styles.itemCard}>
@@ -225,20 +250,20 @@ export default function BaseelReportScreen() {
 
       {/* Business Insights */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💡 Business Insights</Text>
+        <Text style={styles.sectionTitle}>{Icons.lightbulb} Business Insights</Text>
         
         <View style={styles.insightsCard}>
-          <Text style={styles.insightTitle}>🏆 Top Performer</Text>
+          <Text style={styles.insightTitle}>{Icons.trophy} Top Performer</Text>
           <Text style={styles.insightValue}>{report.insights.topPerformer}</Text>
         </View>
         
         <View style={styles.insightsCard}>
-          <Text style={styles.insightTitle}>📉 Needs Attention</Text>
+          <Text style={styles.insightTitle}>{Icons.alert} Needs Attention</Text>
           <Text style={styles.insightValue}>{report.insights.worstPerformer}</Text>
         </View>
         
         <View style={styles.insightsCard}>
-          <Text style={styles.insightTitle}>🎯 Today's Recommendation</Text>
+          <Text style={styles.insightTitle}>{Icons.target} Today's Recommendation</Text>
           <Text style={styles.insightValue}>{report.insights.recommendation}</Text>
         </View>
       </View>
