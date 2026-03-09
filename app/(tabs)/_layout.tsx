@@ -51,8 +51,9 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Hide Orders tab for admin (staff) user */}
-      {currentUser !== 'usr_admin_001' && (
+      
+      {/* Orders tab - conditionally rendered */}
+      {currentUser !== 'usr_admin_001' ? (
         <Tabs.Screen
           name="orders"
           options={{
@@ -68,10 +69,10 @@ export default function TabLayout() {
             ),
           }}
         />
-      )}
+      ) : null}
       
-      {/* Only show Report tab for Baseel user */}
-      {currentUser === 'usr_nazir_001' && (
+      {/* Report tab - conditionally rendered */}
+      {currentUser === 'usr_nazir_001' ? (
         <Tabs.Screen
           name="baseel-report"
           options={{
@@ -87,7 +88,8 @@ export default function TabLayout() {
             ),
           }}
         />
-      )}
+      ) : null}
+      
       <Tabs.Screen
         name="settings"
         options={{
