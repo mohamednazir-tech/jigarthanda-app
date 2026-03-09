@@ -32,6 +32,8 @@ export default function TabLayout() {
   console.log('🔍 TabLayout - Effective user:', effectiveUser);
   console.log('🔍 TabLayout - Show Orders?', effectiveUser !== 'usr_admin_001');
   console.log('🔍 TabLayout - Show Report?', effectiveUser === 'usr_nazir_001');
+  console.log('🔍 TabLayout - User from context:', user?.id);
+  console.log('🔍 TabLayout - User from storage:', currentUser);
 
   return (
     <Tabs
@@ -74,11 +76,12 @@ export default function TabLayout() {
         options={{
           title: "Orders",
           tabBarButton: (props) => {
-            // Hide Orders tab from admin users
+            // Hide Orders tab ONLY from admin users
             if (effectiveUser === 'usr_admin_001') {
+              console.log('❌ Hiding Orders tab from admin user');
               return null;
             }
-            // Default behavior for other users
+            console.log('✅ Showing Orders tab for user:', effectiveUser);
             return undefined;
           },
           tabBarIcon: ({ color, size, focused }) => (
@@ -98,12 +101,13 @@ export default function TabLayout() {
         options={{
           title: "Report",
           tabBarButton: (props) => {
-            // Only show Report tab for Baseel users
-            if (effectiveUser !== 'usr_nazir_001') {
-              return null;
+            // Show Report tab ONLY for Baseel users
+            if (effectiveUser === 'usr_nazir_001') {
+              console.log('✅ Showing Report tab for Baseel user');
+              return undefined;
             }
-            // Default behavior for Baseel users
-            return undefined;
+            console.log('❌ Hiding Report tab from user:', effectiveUser);
+            return null;
           },
           tabBarIcon: ({ color, size, focused }) => (
             <View style={styles.iconContainer}>
