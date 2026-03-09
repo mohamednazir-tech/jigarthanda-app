@@ -978,6 +978,7 @@ app.get('/api/baseel-sales-report', async (req, res) => {
     const itemStats = {};
     const timeStats = { morning: 0, afternoon: 0, evening: 0, night: 0 };
     let totalRevenue = 0;
+    let validOrderCount = 0;
     
     orders.forEach(order => {
       const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
@@ -989,7 +990,14 @@ app.get('/api/baseel-sales-report', async (req, res) => {
       else if (hour >= 17 && hour < 21) timeStats.evening++;
       else timeStats.night++;
       
-      totalRevenue += parseFloat(order.total);
+      // Safely parse order total with validation
+      const orderTotal = parseFloat(order.total);
+      if (!isNaN(orderTotal) && orderTotal > 0) {
+        totalRevenue += orderTotal;
+        validOrderCount++;
+      } else {
+        console.log('⚠️ Invalid order total:', order.total, 'for order:', order.id);
+      }
       
       // Count item frequencies
       items.forEach(item => {
@@ -1033,7 +1041,7 @@ app.get('/api/baseel-sales-report', async (req, res) => {
       summary: {
         totalOrders: orders.length,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
-        avgOrderValue: Math.round((totalRevenue / orders.length) * 100) / 100,
+        avgOrderValue: validOrderCount > 0 ? Math.round((totalRevenue / validOrderCount) * 100) / 100 : 0,
         uniqueItems: itemsArray.length,
         peakTime: Object.keys(timeStats).reduce((a, b) => 
           timeStats[a] > timeStats[b] ? a : b
@@ -1057,7 +1065,9 @@ app.get('/api/baseel-sales-report', async (req, res) => {
     
     console.log('📊 Baseel sales report generated:', {
       totalOrders: report.summary.totalOrders,
+      validOrderCount: validOrderCount,
       totalRevenue: report.summary.totalRevenue,
+      avgOrderValue: report.summary.avgOrderValue,
       topItem: report.insights.topPerformer
     });
     

@@ -235,7 +235,7 @@ export default function BaseelReportScreen() {
         <View style={styles.sectionTitleRow}>
           <FontAwesome5 name="money-bill-wave" size={20} color={Colors.primary} />
           <Ionicons name="trending-up" size={20} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>Today's Summary</Text>
+          <Text style={styles.sectionTitle}>Last 3 Days Summary</Text>
         </View>
         
         {/* Top Seller Highlight Card */}
