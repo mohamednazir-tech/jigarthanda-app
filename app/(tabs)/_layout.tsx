@@ -17,6 +17,7 @@ export default function TabLayout() {
       try {
         const userId = await AsyncStorage.getItem('userId');
         console.log('🔍 TabLayout - Current userId:', userId);
+        console.log('🔍 TabLayout - Auth context user:', user?.id);
         setCurrentUser(userId);
       } catch (err) {
         console.error('Error checking user in TabLayout:', err);
@@ -25,6 +26,12 @@ export default function TabLayout() {
     
     checkUser();
   }, [user]); // Update when user changes
+
+  // Use fallback from auth context if AsyncStorage is not ready
+  const effectiveUser = currentUser || user?.id;
+  console.log('🔍 TabLayout - Effective user:', effectiveUser);
+  console.log('🔍 TabLayout - Show Orders?', effectiveUser !== 'usr_admin_001');
+  console.log('🔍 TabLayout - Show Report?', effectiveUser === 'usr_nazir_001');
 
   return (
     <Tabs
@@ -63,7 +70,7 @@ export default function TabLayout() {
       />
       
       {/* Orders tab - Hide from admin users */}
-      {currentUser !== 'usr_admin_001' && (
+      {effectiveUser !== 'usr_admin_001' && (
         <Tabs.Screen
           name="orders"
           options={{
@@ -82,7 +89,7 @@ export default function TabLayout() {
       )}
       
       {/* Report tab - Only show for Baseel users */}
-      {currentUser === 'usr_nazir_001' && (
+      {effectiveUser === 'usr_nazir_001' && (
         <Tabs.Screen
           name="baseel-report"
           options={{
