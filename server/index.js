@@ -994,6 +994,8 @@ app.get('/api/baseel-sales-report', async (req, res) => {
       // Count item frequencies
       items.forEach(item => {
         const itemName = item.item.name;
+        const itemPrice = parseFloat(item.item.price) || 0;
+        
         if (!itemStats[itemName]) {
           itemStats[itemName] = {
             name: itemName,
@@ -1003,7 +1005,7 @@ app.get('/api/baseel-sales-report', async (req, res) => {
           };
         }
         itemStats[itemName].count += item.quantity;
-        itemStats[itemName].revenue += (item.price * item.quantity);
+        itemStats[itemName].revenue += (itemPrice * item.quantity);
       });
     });
     
