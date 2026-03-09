@@ -75,7 +75,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, size, focused }) => (
               <View style={styles.iconContainer}>
                 <Ionicons 
-                  name="bar-chart" 
+                  name="analytics" 
                   size={24} 
                   color={color}
                 />

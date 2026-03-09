@@ -202,8 +202,9 @@ export default function BaseelReportScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
-          <MaterialIcons name="bar-chart" size={28} color={Colors.white} />
+          <MaterialIcons name="assessment" size={28} color={Colors.white} />
           <Text style={styles.headerTitle}>Baseel Sales Report</Text>
+          <MaterialIcons name="trending-up" size={20} color={Colors.gold} />
         </View>
         <Text style={styles.headerDate}>
           {report.date} • Updated {new Date(report.timestamp).toLocaleTimeString('en-US', { 
