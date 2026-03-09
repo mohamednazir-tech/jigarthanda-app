@@ -90,6 +90,24 @@ export default function OrdersScreen() {
   const { orders, todayOrders, todayTotal, deleteAllOrders, loadData } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
+  // Security: Hide Orders screen from admin users
+  if (user?.id === 'usr_admin_001') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.accessDeniedContainer}>
+          <MaterialIcons name="block" size={64} color={Colors.error} />
+          <Text style={styles.accessDeniedTitle}>Access Denied</Text>
+          <Text style={styles.accessDeniedMessage}>
+            Orders management is not available for admin users.
+          </Text>
+          <Text style={styles.accessDeniedSubMessage}>
+            Please switch to a business account to access orders.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
   // Calculate today's cash and UPI totals (must be before early return)
   const todayCashTotal = useMemo(() => {
     return todayOrders
@@ -709,12 +727,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
   accessDeniedTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700' as const,
     color: Colors.text,
     marginTop: 16,
     textAlign: 'center',
+  },
+  accessDeniedMessage: {
+    fontSize: 16,
+    color: Colors.textMuted,
+    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  accessDeniedSubMessage: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   accessDeniedText: {
     fontSize: 14,

@@ -45,6 +45,24 @@ export default function BaseelReportScreen() {
   const BASE_URL = 'https://jigarthanda-api.onrender.com';
   const BASEEL_USER_ID = 'usr_nazir_001';
 
+  // Security: Hide Report screen from admin users
+  if (currentUser === 'usr_admin_001') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.accessDeniedContainer}>
+          <MaterialIcons name="assessment" size={64} color={Colors.error} />
+          <Text style={styles.accessDeniedTitle}>Access Denied</Text>
+          <Text style={styles.accessDeniedMessage}>
+            Business analytics is not available for admin users.
+          </Text>
+          <Text style={styles.accessDeniedSubMessage}>
+            Please switch to a business account to access reports.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   // Check current user on mount
   useEffect(() => {
     const checkUser = async () => {
@@ -602,5 +620,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.primary,
     textAlign: 'center',
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  accessDeniedTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  accessDeniedMessage: {
+    fontSize: 16,
+    color: Colors.textMuted,
+    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  accessDeniedSubMessage: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
