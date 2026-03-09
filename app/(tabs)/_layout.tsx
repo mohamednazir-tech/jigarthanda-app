@@ -1,13 +1,30 @@
-import { Tabs } from "expo-router";
-import { Ionicons } from '@expo/vector-icons';
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import Colors from "@/constants/colors";
+import React, { useState, useEffect } from 'react';
+import { Tabs } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { View, Text } from 'react-native';
+import Colors from '@/constants/colors';
+import { StyleSheet } from "react-native";
 
 export default function TabLayout() {
-  // For now, show all tabs - we'll handle security in individual screens
-  console.log('🔍 TabLayout - Showing all tabs for debugging');
+  const { user } = useAuth();
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  // Check current user on mount
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        console.log('🔍 TabLayout - Current userId:', userId);
+        setCurrentUser(userId);
+      } catch (err) {
+        console.error('Error checking user in TabLayout:', err);
+      }
+    };
+    
+    checkUser();
+  }, [user]); // Update when user changes
 
   return (
     <Tabs
@@ -45,37 +62,43 @@ export default function TabLayout() {
         }}
       />
       
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: "Orders",
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons 
-                name="list" 
-                size={24} 
-                color={color}
-              />
-            </View>
-          ),
-        }}
-      />
+      {/* Orders tab - Hide from admin users */}
+      {currentUser !== 'usr_admin_001' && (
+        <Tabs.Screen
+          name="orders"
+          options={{
+            title: "Orders",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View style={styles.iconContainer}>
+                <Ionicons 
+                  name="list" 
+                  size={24} 
+                  color={color}
+                />
+              </View>
+            ),
+          }}
+        />
+      )}
       
-      <Tabs.Screen
-        name="baseel-report"
-        options={{
-          title: "Report",
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons 
-                name="analytics" 
-                size={24} 
-                color={color}
-              />
-            </View>
-          ),
-        }}
-      />
+      {/* Report tab - Only show for Baseel users */}
+      {currentUser === 'usr_nazir_001' && (
+        <Tabs.Screen
+          name="baseel-report"
+          options={{
+            title: "Report",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View style={styles.iconContainer}>
+                <Ionicons 
+                  name="analytics" 
+                  size={24} 
+                  color={color}
+                />
+              </View>
+            ),
+          }}
+        />
+      )}
       
       <Tabs.Screen
         name="settings"
