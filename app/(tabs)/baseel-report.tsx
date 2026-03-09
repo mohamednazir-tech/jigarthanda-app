@@ -63,15 +63,20 @@ export default function BaseelReportScreen() {
         
         setCurrentUser(userId);
         
-        // If not Baseel, show access denied
-        if (userId !== BASEEL_USER_ID) {
-          console.log('❌ Access denied - User is not Baseel');
-          setError('Access denied - This report is for Baseel only');
-          return;
-        }
-        
-        console.log('✅ User authenticated as Baseel - Fetching report');
+        // For now, allow access to everyone for debugging
+        // Remove this restriction temporarily
+        console.log('✅ Allowing access for debugging - Fetching report');
         await fetchReport();
+        
+        // Original strict check (commented out for debugging)
+        // if (userId !== BASEEL_USER_ID) {
+        //   console.log('❌ Access denied - User is not Baseel');
+        //   setError('Access denied - This report is for Baseel only');
+        //   return;
+        // }
+        
+        // console.log('✅ User authenticated as Baseel - Fetching report');
+        // await fetchReport();
       } catch (err) {
         console.error('Error checking user:', err);
         setError('Authentication error');
@@ -160,9 +165,14 @@ export default function BaseelReportScreen() {
   };
 
   const onRefresh = () => {
-    if (currentUser === BASEEL_USER_ID) {
-      fetchReport();
-    }
+    // Allow refresh for everyone during debugging
+    console.log('🔄 Refreshing report for debugging');
+    fetchReport();
+    
+    // Original strict check (commented out for debugging)
+    // if (currentUser === BASEEL_USER_ID) {
+    //   fetchReport();
+    // }
   };
 
   if (error) {
