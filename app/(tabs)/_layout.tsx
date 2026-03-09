@@ -6,34 +6,8 @@ import Colors from "@/constants/colors";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
-  const [currentUser, setCurrentUser] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    const checkUser = async () => {
-      const userId = await AsyncStorage.getItem('userId');
-      console.log('🔍 TabLayout - Current userId:', userId);
-      
-      // For debugging, allow access like the report page
-      // If userId is null, treat as admin for testing
-      setCurrentUser(userId || 'usr_admin_001');
-    };
-    
-    // Check user on mount
-    checkUser();
-    
-    // Set up interval to check for user changes (for debugging)
-    const interval = setInterval(checkUser, 2000); // Check every 2 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Determine which tabs to show
-  const shouldShowOrders = currentUser !== 'usr_admin_001';
-  const shouldShowReport = currentUser === 'usr_nazir_001';
-  
-  console.log('🔍 Navigation Logic - currentUser:', currentUser);
-  console.log('🔍 Show Orders:', shouldShowOrders);
-  console.log('🔍 Show Report:', shouldShowReport);
+  // For now, show all tabs - we'll handle security in individual screens
+  console.log('🔍 TabLayout - Showing all tabs for debugging');
 
   return (
     <Tabs
@@ -71,41 +45,37 @@ export default function TabLayout() {
         }}
       />
       
-      {shouldShowOrders && (
-        <Tabs.Screen
-          name="orders"
-          options={{
-            title: "Orders",
-            tabBarIcon: ({ color, size, focused }) => (
-              <View style={styles.iconContainer}>
-                <Ionicons 
-                  name="list" 
-                  size={24} 
-                  color={color}
-                />
-              </View>
-            ),
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: "Orders",
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={styles.iconContainer}>
+              <Ionicons 
+                name="list" 
+                size={24} 
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
       
-      {shouldShowReport && (
-        <Tabs.Screen
-          name="baseel-report"
-          options={{
-            title: "Report",
-            tabBarIcon: ({ color, size, focused }) => (
-              <View style={styles.iconContainer}>
-                <Ionicons 
-                  name="analytics" 
-                  size={24} 
-                  color={color}
-                />
-              </View>
-            ),
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="baseel-report"
+        options={{
+          title: "Report",
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={styles.iconContainer}>
+              <Ionicons 
+                name="analytics" 
+                size={24} 
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
       
       <Tabs.Screen
         name="settings"
