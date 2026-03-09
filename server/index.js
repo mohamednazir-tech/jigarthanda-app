@@ -581,8 +581,8 @@ function scheduleDailySummaryFallback() {
 
 // Schedule daily summary using cron (production-grade)
 if (cron) {
-  cron.schedule('1 0 * * *', async () => {
-    console.log('📅 Running daily summary via cron (12:01 AM)');
+  cron.schedule('30 23 * * *', async () => {
+    console.log('📅 Running daily summary via cron (11:30 PM)');
     await sendDailySummaryToBaseel();
   });
 } else {
