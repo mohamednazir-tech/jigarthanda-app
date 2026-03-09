@@ -1,31 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import Colors from '../../constants/colors';
-
-// Icon components using text emojis
-const Icons = {
-  chart: '📊',
-  money: '💰',
-  trendingUp: '📈',
-  trendingDown: '📉',
-  fire: '🔥',
-  clock: '🕒',
-  morning: '🌅',
-  afternoon: '☀️',
-  evening: '🌆',
-  night: '🌙',
-  trophy: '🏆',
-  alert: '📢',
-  target: '🎯',
-  rocket: '🚀',
-  lightbulb: '💡',
-  star: '⭐',
-  package: '📦',
-  cart: '🛒',
-  receipt: '🧾',
-  coins: '🪙',
-  crown: '👑',
-};
 
 interface SalesReport {
   timestamp: string;
@@ -120,32 +96,43 @@ export default function BaseelReportScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{Icons.chart} Baseel Sales Report</Text>
+        <View style={styles.headerTitleRow}>
+          <MaterialIcons name="bar-chart" size={28} color={Colors.white} />
+          <Text style={styles.headerTitle}>Baseel Sales Report</Text>
+        </View>
         <Text style={styles.headerDate}>{report.date}</Text>
       </View>
 
       {/* Summary Cards */}
       <View style={styles.summarySection}>
-        <Text style={styles.sectionTitle}>{Icons.money} {Icons.trendingUp} Today's Summary</Text>
+        <View style={styles.sectionTitleRow}>
+          <FontAwesome5 name="money-bill-wave" size={20} color={Colors.primary} />
+          <Ionicons name="trending-up" size={20} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>Today's Summary</Text>
+        </View>
         
         <View style={styles.summaryGrid}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{Icons.receipt} Orders</Text>
+            <FontAwesome name="file-text" size={24} color={Colors.primary} />
+            <Text style={styles.summaryLabel}>Orders</Text>
             <Text style={styles.summaryValue}>{report.summary.totalOrders}</Text>
           </View>
           
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{Icons.coins} Revenue</Text>
+            <FontAwesome5 name="coins" size={24} color={Colors.primary} />
+            <Text style={styles.summaryLabel}>Revenue</Text>
             <Text style={styles.summaryValue}>{formatCurrency(report.summary.totalRevenue)}</Text>
           </View>
           
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{Icons.cart} Avg Order</Text>
+            <MaterialIcons name="shopping-cart" size={24} color={Colors.primary} />
+            <Text style={styles.summaryLabel}>Avg Order</Text>
             <Text style={styles.summaryValue}>{formatCurrency(report.summary.avgOrderValue)}</Text>
           </View>
           
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{Icons.clock} Peak Time</Text>
+            <MaterialIcons name="schedule" size={24} color={Colors.primary} />
+            <Text style={styles.summaryLabel}>Peak Time</Text>
             <Text style={styles.summaryValue}>{report.summary.peakTime}</Text>
           </View>
         </View>
@@ -153,29 +140,36 @@ export default function BaseelReportScreen() {
 
       {/* Time Analysis */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{Icons.clock} Sales by Time</Text>
+        <View style={styles.sectionTitleRow}>
+          <MaterialIcons name="access-time" size={20} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>Sales by Time</Text>
+        </View>
         
         <View style={styles.timeGrid}>
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>{Icons.morning} Morning</Text>
+            <Ionicons name="sunny-outline" size={24} color={Colors.gold} />
+            <Text style={styles.timeLabel}>Morning</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.morning.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.morning.percentage}%</Text>
           </View>
           
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>{Icons.afternoon} Afternoon</Text>
+            <Ionicons name="sunny" size={24} color={Colors.gold} />
+            <Text style={styles.timeLabel}>Afternoon</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.afternoon.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.afternoon.percentage}%</Text>
           </View>
           
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>{Icons.evening} Evening</Text>
+            <MaterialIcons name="wb-twilight" size={24} color={Colors.gold} />
+            <Text style={styles.timeLabel}>Evening</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.evening.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.evening.percentage}%</Text>
           </View>
           
           <View style={styles.timeCard}>
-            <Text style={styles.timeLabel}>{Icons.night} Night</Text>
+            <Ionicons name="moon-outline" size={24} color={Colors.gold} />
+            <Text style={styles.timeLabel}>Night</Text>
             <Text style={styles.timeValue}>{report.timeAnalysis.night.count} orders</Text>
             <Text style={styles.timePercent}>{report.timeAnalysis.night.percentage}%</Text>
           </View>
@@ -184,7 +178,10 @@ export default function BaseelReportScreen() {
 
       {/* High Sale Items */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{Icons.fire} Top Performing Items</Text>
+        <View style={styles.sectionTitleRow}>
+          <MaterialIcons name="local-fire-department" size={20} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>Top Performing Items</Text>
+        </View>
         
         {report.highSaleItems.map((item, index) => (
           <View key={item.name} style={styles.itemCard}>
@@ -218,7 +215,10 @@ export default function BaseelReportScreen() {
 
       {/* Low Sale Items */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{Icons.trendingDown} Low Performing Items</Text>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="trending-down" size={20} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>Low Performing Items</Text>
+        </View>
         
         {report.lowSaleItems.map((item, index) => (
           <View key={item.name} style={styles.itemCard}>
@@ -250,20 +250,26 @@ export default function BaseelReportScreen() {
 
       {/* Business Insights */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{Icons.lightbulb} Business Insights</Text>
+        <View style={styles.sectionTitleRow}>
+          <MaterialIcons name="lightbulb" size={20} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>Business Insights</Text>
+        </View>
         
         <View style={styles.insightsCard}>
-          <Text style={styles.insightTitle}>{Icons.trophy} Top Performer</Text>
+          <FontAwesome5 name="trophy" size={20} color={Colors.gold} />
+          <Text style={styles.insightTitle}>Top Performer</Text>
           <Text style={styles.insightValue}>{report.insights.topPerformer}</Text>
         </View>
         
         <View style={styles.insightsCard}>
-          <Text style={styles.insightTitle}>{Icons.alert} Needs Attention</Text>
+          <MaterialIcons name="campaign" size={20} color={Colors.rose} />
+          <Text style={styles.insightTitle}>Needs Attention</Text>
           <Text style={styles.insightValue}>{report.insights.worstPerformer}</Text>
         </View>
         
         <View style={styles.insightsCard}>
-          <Text style={styles.insightTitle}>{Icons.target} Today's Recommendation</Text>
+          <FontAwesome5 name="bullseye" size={20} color={Colors.primary} />
+          <Text style={styles.insightTitle}>Today's Recommendation</Text>
           <Text style={styles.insightValue}>{report.insights.recommendation}</Text>
         </View>
       </View>
@@ -282,11 +288,16 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     alignItems: 'center',
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: Colors.white,
-    marginBottom: 5,
+    marginLeft: 10,
   },
   headerDate: {
     fontSize: 16,
@@ -302,11 +313,16 @@ const styles = StyleSheet.create({
   summarySection: {
     padding: 20,
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 15,
     textAlign: 'center',
   },
   summaryGrid: {
@@ -326,6 +342,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    gap: 8,
   },
   summaryLabel: {
     fontSize: 12,
@@ -447,11 +464,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    alignItems: 'center',
+    gap: 8,
   },
   insightTitle: {
     fontSize: 12,
     color: Colors.text,
-    marginBottom: 5,
+    textAlign: 'center',
   },
   insightValue: {
     fontSize: 16,
