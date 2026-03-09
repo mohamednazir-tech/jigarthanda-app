@@ -47,20 +47,35 @@ export default function BaseelReportScreen() {
   const [report, setReport] = useState<SalesReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const BASE_URL = 'https://jigarthanda-api.onrender.com';
+  const BASEEL_USER_ID = 'usr_nazir_001';
 
   const fetchReport = async () => {
     try {
       setRefreshing(true);
-      const response = await fetch('https://jigarthanda-api.onrender.com/api/baseel-sales-report');
+      setError(null);
+
+      const response = await fetch(
+        `${BASE_URL}/api/baseel-sales-report?userId=${BASEEL_USER_ID}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch report');
+      }
+
       const data = await response.json();
       
       if (data.success) {
         setReport(data.report);
       } else {
-        console.error('Failed to fetch report:', data.error);
+        setError('Failed to load report data');
       }
-    } catch (error) {
-      console.error('Error fetching report:', error);
+
+    } catch (err) {
+      console.error('Error fetching report:', err);
+      setError('Network error - Please check connection');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -83,6 +98,15 @@ export default function BaseelReportScreen() {
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>⚠️ {error}</Text>
+        <Text style={styles.retryText} onPress={onRefresh}>Tap to retry</Text>
+      </View>
+    );
+  }
+
   const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
   const getPerformanceColor = (performance: string) => 
     performance.includes('🔥') ? '#FF6B6B' : '#4CAF50';
@@ -100,7 +124,12 @@ export default function BaseelReportScreen() {
           <MaterialIcons name="bar-chart" size={28} color={Colors.white} />
           <Text style={styles.headerTitle}>Baseel Sales Report</Text>
         </View>
-        <Text style={styles.headerDate}>{report.date}</Text>
+        <Text style={styles.headerDate}>
+          {report.date} • Updated {new Date(report.timestamp).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </Text>
       </View>
 
       {/* Summary Cards */}
@@ -109,6 +138,13 @@ export default function BaseelReportScreen() {
           <FontAwesome5 name="money-bill-wave" size={20} color={Colors.primary} />
           <Ionicons name="trending-up" size={20} color={Colors.primary} />
           <Text style={styles.sectionTitle}>Today's Summary</Text>
+        </View>
+        
+        {/* Top Seller Highlight Card */}
+        <View style={styles.topItemCard}>
+          <FontAwesome5 name="trophy" size={24} color={Colors.gold} />
+          <Text style={styles.topItemTitle}>Best Seller</Text>
+          <Text style={styles.topItemName}>{report.insights.topPerformer}</Text>
         </View>
         
         <View style={styles.summaryGrid}>
@@ -184,7 +220,7 @@ export default function BaseelReportScreen() {
         </View>
         
         {report.highSaleItems.map((item, index) => (
-          <View key={item.name} style={styles.itemCard}>
+          <View key={`${item.name}-${item.rank}`} style={styles.itemCard}>
             <View style={styles.itemHeader}>
               <Text style={styles.itemRank}>#{item.rank}</Text>
               <Text style={styles.itemName}>{item.name}</Text>
@@ -221,7 +257,7 @@ export default function BaseelReportScreen() {
         </View>
         
         {report.lowSaleItems.map((item, index) => (
-          <View key={item.name} style={styles.itemCard}>
+          <View key={`${item.name}-${item.rank}`} style={styles.itemCard}>
             <View style={styles.itemHeader}>
               <Text style={styles.itemRank}>#{item.rank}</Text>
               <Text style={styles.itemName}>{item.name}</Text>
@@ -309,6 +345,43 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     marginTop: 50,
+  },
+  errorText: {
+    fontSize: 18,
+    color: Colors.error,
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  retryText: {
+    fontSize: 16,
+    color: Colors.primary,
+    textAlign: 'center',
+    marginTop: 10,
+    textDecorationLine: 'underline',
+  },
+  topItemCard: {
+    backgroundColor: Colors.gold,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    gap: 8,
+  },
+  topItemTitle: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: 'bold',
+  },
+  topItemName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text,
+    textAlign: 'center',
   },
   summarySection: {
     padding: 20,

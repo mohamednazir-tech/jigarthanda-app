@@ -946,7 +946,17 @@ app.get('/api/orders/stats', async (req, res) => {
 // Baseel-specific sales report - high and low sale items
 app.get('/api/baseel-sales-report', async (req, res) => {
   try {
-    console.log('📊 Generating Baseel sales report...');
+    const { userId } = req.query;
+    
+    // Security: Only allow Baseel user to access this report
+    if (userId !== 'usr_nazir_001') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Access denied - Baseel only' 
+      });
+    }
+    
+    console.log('📊 Generating Baseel sales report for user:', userId);
     
     // Get today's sales data with item frequencies
     const salesDataQuery = `
