@@ -51,21 +51,25 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: "Orders",
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons 
-                name="list" 
-                size={24} 
-                color={color}
-              />
-            </View>
-          ),
-        }}
-      />
+      {/* Hide Orders tab for admin (staff) user */}
+      {currentUser !== 'usr_admin_001' && (
+        <Tabs.Screen
+          name="orders"
+          options={{
+            title: "Orders",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View style={styles.iconContainer}>
+                <Ionicons 
+                  name="list" 
+                  size={24} 
+                  color={color}
+                />
+              </View>
+            ),
+          }}
+        />
+      )}
+      
       {/* Only show Report tab for Baseel user */}
       {currentUser === 'usr_nazir_001' && (
         <Tabs.Screen
