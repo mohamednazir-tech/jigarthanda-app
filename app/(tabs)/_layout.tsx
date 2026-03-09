@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import Colors from '@/constants/colors';
 import { StyleSheet } from "react-native";
 
@@ -86,7 +86,7 @@ export default function TabLayout() {
               return null;
             }
             console.log('✅ Showing Orders tab for role:', userRole);
-            return undefined;
+            return <TouchableOpacity {...(props as any)} />;
           },
           tabBarIcon: ({ color, size, focused }) => (
             <View style={styles.iconContainer}>
@@ -109,7 +109,7 @@ export default function TabLayout() {
             // Show Report tab for ADMIN users (Baseel has admin role)
             if (userRole === 'admin') {
               console.log('✅ Showing Report tab for admin user');
-              return undefined;
+              return <TouchableOpacity {...(props as any)} />;
             }
             console.log('❌ Hiding Report tab from role:', userRole);
             return null;
