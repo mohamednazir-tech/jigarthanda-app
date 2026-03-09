@@ -958,7 +958,7 @@ app.get('/api/baseel-sales-report', async (req, res) => {
     
     console.log('📊 Generating Baseel sales report for user:', userId);
     
-    // Get today's sales data with item frequencies
+    // Get today's sales data with item frequencies (last 7 days for better data)
     const salesDataQuery = `
       SELECT 
         o.items,
@@ -966,7 +966,7 @@ app.get('/api/baseel-sales-report', async (req, res) => {
         o.createdAt,
         o.paymentMethod
       FROM orders o
-      WHERE o.createdAt >= CURRENT_DATE
+      WHERE o.createdAt >= NOW() - INTERVAL '7 days'
         AND o.total > 0
       ORDER BY o.createdAt DESC
     `;
@@ -1027,7 +1027,7 @@ app.get('/api/baseel-sales-report', async (req, res) => {
     
     const report = {
       timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
+      date: `Last 7 Days (${new Date().toISOString().split('T')[0]})`,
       summary: {
         totalOrders: orders.length,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
