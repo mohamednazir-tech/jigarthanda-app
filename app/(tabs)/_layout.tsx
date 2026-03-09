@@ -11,9 +11,17 @@ export default function TabLayout() {
   React.useEffect(() => {
     const checkUser = async () => {
       const userId = await AsyncStorage.getItem('userId');
+      console.log('🔍 TabLayout - Current userId:', userId);
       setCurrentUser(userId);
     };
+    
+    // Check user on mount
     checkUser();
+    
+    // Set up interval to check for user changes (for debugging)
+    const interval = setInterval(checkUser, 2000); // Check every 2 seconds
+    
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -53,42 +61,48 @@ export default function TabLayout() {
       />
       
       {/* Orders tab - conditionally rendered */}
-      {currentUser !== 'usr_admin_001' ? (
-        <Tabs.Screen
-          name="orders"
-          options={{
-            title: "Orders",
-            tabBarIcon: ({ color, size, focused }) => (
-              <View style={styles.iconContainer}>
-                <Ionicons 
-                  name="list" 
-                  size={24} 
-                  color={color}
-                />
-              </View>
-            ),
-          }}
-        />
-      ) : null}
+      {(() => {
+        console.log('🔍 Orders Tab - currentUser:', currentUser, 'showOrders:', currentUser !== 'usr_admin_001');
+        return currentUser !== 'usr_admin_001' ? (
+          <Tabs.Screen
+            name="orders"
+            options={{
+              title: "Orders",
+              tabBarIcon: ({ color, size, focused }) => (
+                <View style={styles.iconContainer}>
+                  <Ionicons 
+                    name="list" 
+                    size={24} 
+                    color={color}
+                  />
+                </View>
+              ),
+            }}
+          />
+        ) : null;
+      })()}
       
       {/* Report tab - conditionally rendered */}
-      {currentUser === 'usr_nazir_001' ? (
-        <Tabs.Screen
-          name="baseel-report"
-          options={{
-            title: "Report",
-            tabBarIcon: ({ color, size, focused }) => (
-              <View style={styles.iconContainer}>
-                <Ionicons 
-                  name="analytics" 
-                  size={24} 
-                  color={color}
-                />
-              </View>
-            ),
-          }}
-        />
-      ) : null}
+      {(() => {
+        console.log('🔍 Report Tab - currentUser:', currentUser, 'showReport:', currentUser === 'usr_nazir_001');
+        return currentUser === 'usr_nazir_001' ? (
+          <Tabs.Screen
+            name="baseel-report"
+            options={{
+              title: "Report",
+              tabBarIcon: ({ color, size, focused }) => (
+                <View style={styles.iconContainer}>
+                  <Ionicons 
+                    name="analytics" 
+                    size={24} 
+                    color={color}
+                  />
+                </View>
+              ),
+            }}
+          />
+        ) : null;
+      })()}
       
       <Tabs.Screen
         name="settings"
