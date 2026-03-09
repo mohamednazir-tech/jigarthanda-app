@@ -102,8 +102,13 @@ class PushNotificationService {
       const isInitialized = await this.initialize();
       if (!isInitialized) return false;
 
-      const token = await this.getPushToken();
+      // Get the actual Expo push token data
+      const tokenData = await Notifications.getExpoPushTokenAsync();
+      const token = tokenData.data;
+      
       if (!token) return false;
+
+      console.log('📱 Registering device with token:', token.slice(-10));
 
       // Send token to backend
       const response = await fetch(`${API.baseURL}/register-device`, {
@@ -143,8 +148,13 @@ class PushNotificationService {
       const isInitialized = await this.initialize();
       if (!isInitialized) return false;
 
-      const token = await this.getPushToken();
+      // Get the actual Expo push token data
+      const tokenData = await Notifications.getExpoPushTokenAsync();
+      const token = tokenData.data;
+      
       if (!token) return false;
+
+      console.log('📱 Logging out device with token:', token.slice(-10));
 
       // Deactivate device on backend
       const response = await fetch(`${API.baseURL}/logout-device`, {

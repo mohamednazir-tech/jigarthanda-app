@@ -291,84 +291,6 @@ app.post('/api/orders', async (req, res) => {
     console.log('📱 Sending ORDER CONFIRMED to creator:', userId);
     await sendPushNotificationToUser(order, userId);
 
-      res.json({ success: true, message: 'Order created', order });
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('❌ Transaction rolled back:', error);
-      throw error;
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    console.error('=== ORDER CREATION ERROR ===');
-  }
-
-  // Get user role from cached map (secure & fast)
-  const userRole = userRoles[userId];
-  
-  if (!userRole) {
-    console.log('❌ Unknown user ID:', userId);
-    return res.status(400).json({ success: false, message: 'Invalid user ID' });
-  }
-
-  const orderId = `ORD${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
-  
-  // Get user name for createdByName field
-  let createdByName = 'Unknown';
-  if (userId === 'usr_admin_001') {
-    createdByName = 'Admin';
-  } else if (userId === 'usr_nazir_001') {
-    createdByName = 'Baseel';
-  }
-
-  console.log('=== DATABASE TRANSACTION START ===');
-  
-  // Use transaction to prevent race condition between sequence and insert
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    
-    // Get sequential order number within transaction
-    const orderNumberResult = await client.query('SELECT nextval(\'order_number_seq\') as orderNumber');
-    const orderNumber = orderNumberResult.rows[0].ordernumber; // PostgreSQL returns lowercase
-    
-    // Insert order with the obtained sequence number
-    const query = `
-      INSERT INTO orders (id, orderNumber, userId, createdByName, items, total, tax, grandTotal, paymentMethod, status) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *
-    `;
-    
-    console.log('Query:', query);
-    console.log('Values:', [orderId, orderNumber, userId, createdByName, JSON.stringify(items), total, tax || 0, grandTotal, paymentMethod, 'pending']);
-
-    const result = await client.query(
-      query,
-      [orderId, orderNumber, userId, createdByName, JSON.stringify(items), total, tax || 0, grandTotal, paymentMethod, 'pending']
-    );
-    
-    await client.query('COMMIT');
-    
-    const order = {
-      ...result.rows[0],
-      items: typeof result.rows[0].items === "string" ? JSON.parse(result.rows[0].items) : result.rows[0].items,
-    };
-
-    console.log('=== ORDER CREATED SUCCESSFULLY ===');
-    console.log('Order created:', order);
-    console.log('Created by user ID:', userId);
-    console.log('User role from cache:', userRole);
-
-    // Send push notification to Baseel for ALL new orders (both admin and staff)
-  console.log('🔔 New order created - sending notification to Baseel');
-  console.log('📱 Order created by:', userId, '(', userRole, ')');
-  console.log('🎯 Sending NEW ORDER notification to Baseel (usr_nazir_001)');
-  await sendPushNotificationToBaseel(order);
-
-  // Send confirmation to user who created order
-  console.log('📱 Sending ORDER CONFIRMED to creator:', userId);
-  await sendPushNotificationToUser(order, userId);
-
     res.json({ success: true, message: 'Order created', order });
 
   } catch (error) {
@@ -423,6 +345,12 @@ async function sendPushNotificationToBaseel(order) {
 
     const notificationPromises = tokens.map(async (token) => {
       try {
+        // Skip invalid tokens to prevent push errors
+        if (!token.startsWith('ExponentPushToken')) {
+          console.log(`⚠️ Skipping invalid token: ${token.slice(-10)}`);
+          return { success: false, token: token.slice(-10), error: 'Invalid token format' };
+        }
+        
         await axios.post(
           'https://exp.host/--/api/v2/push/send',
           {
@@ -592,6 +520,12 @@ async function sendDailySummaryToBaseel() {
     // Send daily summary notifications to ALL devices in PARALLEL for better performance
     const notificationPromises = tokens.map(async (token) => {
       try {
+        // Skip invalid tokens to prevent push errors
+        if (!token.startsWith('ExponentPushToken')) {
+          console.log(`⚠️ Skipping invalid daily summary token: ${token.slice(-10)}`);
+          return { success: false, token: token.slice(-10), error: 'Invalid token format' };
+        }
+        
         await axios.post(
           'https://exp.host/--/api/v2/push/send',
           {

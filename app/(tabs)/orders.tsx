@@ -277,8 +277,8 @@ export default function OrdersScreen() {
                   ₹{(dateOrders as Order[]).reduce((sum: number, o: Order) => sum + o.grandTotal, 0).toLocaleString()}
                 </Text>
               </View>
-              {(dateOrders as Order[]).map((order: Order) => (
-                <OrderCard key={order.id} order={order} />
+              {(dateOrders as Order[]).map((order: Order, index: number) => (
+                <OrderCard key={`${order.id}-${index}`} order={order} />
               ))}
             </View>
           ))}
