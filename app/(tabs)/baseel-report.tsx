@@ -20,21 +20,13 @@ interface SalesReport {
     evening: { count: number; percentage: number };
     night: { count: number; percentage: number };
   };
-  highSaleItems: Array<{
+  allItemsRanked: Array<{
     rank: number;
     name: string;
     unitsSold: number;
-    revenue: number;
-    avgPrice: number;
+    revenue: number | null;
+    avgPrice: number | null;
     performance: string;
-  }>;
-  lowSaleItems: Array<{
-    rank: number;
-    name: string;
-    unitsSold: number;
-    revenue: number;
-    avgPrice: number;
-    recommendation: string;
   }>;
   insights: {
     topPerformer: string;
@@ -130,8 +122,7 @@ export default function BaseelReportScreen() {
             evening: { count: data.data?.totalOrders || 0, percentage: 100 },
             night: { count: 0, percentage: 0 }
           },
-          highSaleItems: [],
-          lowSaleItems: [],
+          allItemsRanked: [],
           insights: {
             topPerformer: 'No data available',
             worstPerformer: 'No data available',
@@ -302,14 +293,14 @@ export default function BaseelReportScreen() {
         </View>
       </View>
 
-      {/* High Sale Items */}
+      {/* All Items Ranking */}
       <View style={styles.section}>
         <View style={styles.sectionTitleRow}>
-          <MaterialIcons name="local-fire-department" size={20} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>Top Performing Items</Text>
+          <MaterialIcons name="leaderboard" size={20} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>All Items Ranking (Last 3 Days)</Text>
         </View>
         
-        {report.highSaleItems.map((item, index) => (
+        {report.allItemsRanked.map((item: any, index: any) => (
           <View key={`${item.name}-${item.rank}`} style={styles.itemCard}>
             <View style={styles.itemHeader}>
               <Text style={styles.itemRank}>#{item.rank}</Text>
@@ -317,45 +308,6 @@ export default function BaseelReportScreen() {
               <Text style={[styles.performance, { color: getPerformanceColor(item.performance) }]}>
                 {item.performance}
               </Text>
-            </View>
-            
-            <View style={styles.itemStats}>
-              <View style={styles.statRow}>
-                <Text style={styles.statLabel}>Units Sold:</Text>
-                <Text style={styles.statValue}>{item.unitsSold}</Text>
-              </View>
-              
-              <View style={styles.statRow}>
-                <Text style={styles.statLabel}>Revenue:</Text>
-                <Text style={styles.statValue}>
-                  {item.revenue !== null ? formatCurrency(item.revenue) : 'Calculating...'}
-                </Text>
-              </View>
-              
-              <View style={styles.statRow}>
-                <Text style={styles.statLabel}>Avg Price:</Text>
-                <Text style={styles.statValue}>
-                  {item.avgPrice !== null ? formatCurrency(item.avgPrice) : 'Calculating...'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        ))}
-      </View>
-
-      {/* Low Sale Items */}
-      <View style={styles.section}>
-        <View style={styles.sectionTitleRow}>
-          <Ionicons name="trending-down" size={20} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>Low Performing Items</Text>
-        </View>
-        
-        {report.lowSaleItems.map((item, index) => (
-          <View key={`${item.name}-${item.rank}`} style={styles.itemCard}>
-            <View style={styles.itemHeader}>
-              <Text style={styles.itemRank}>#{item.rank}</Text>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.recommendation}>{item.recommendation}</Text>
             </View>
             
             <View style={styles.itemStats}>
