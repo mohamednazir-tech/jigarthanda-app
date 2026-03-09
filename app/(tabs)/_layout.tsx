@@ -56,6 +56,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="baseel-report"
+        options={{
+          title: "Report",
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={styles.iconContainer}>
+              <Ionicons 
+                name="bar-chart" 
+                size={24} 
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
