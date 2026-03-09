@@ -131,6 +131,45 @@ class PushNotificationService {
     }
   }
 
+  // Logout device - deactivate device on logout
+  static async logoutDevice(): Promise<boolean> {
+    try {
+      // Skip push notifications in development mode
+      if (__DEV__) {
+        console.log('Push notifications disabled in development mode');
+        return true;
+      }
+
+      const isInitialized = await this.initialize();
+      if (!isInitialized) return false;
+
+      const token = await this.getPushToken();
+      if (!token) return false;
+
+      // Deactivate device on backend
+      const response = await fetch(`${API.baseURL}/logout-device`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Device deactivated on logout');
+        return true;
+      } else {
+        console.error('Failed to deactivate device');
+        return false;
+      }
+    } catch (error) {
+      console.error('Device logout failed:', error);
+      return false;
+    }
+  }
+
   // Send local notification (fallback)
   static async sendLocalNotification(title: string, body: string, data?: any): Promise<void> {
     try {

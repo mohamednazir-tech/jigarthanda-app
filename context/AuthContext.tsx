@@ -74,6 +74,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const logout = useCallback(async () => {
     try {
+      // Deactivate device for push notifications
+      try {
+        await PushNotificationService.logoutDevice();
+      } catch (error) {
+        console.log('Device logout failed:', error);
+      }
+      
       setUser(null);
       await AsyncStorage.removeItem(AUTH_KEY);
       console.log('User logged out');

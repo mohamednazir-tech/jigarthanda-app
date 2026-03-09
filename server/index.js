@@ -302,38 +302,115 @@ app.post('/api/orders', async (req, res) => {
     }
   } catch (error) {
     console.error('=== ORDER CREATION ERROR ===');
-    console.error('Error details:', error);
-    res.status(500).json({ success: false, error: error.message });
   }
+
+  // Get user role from cached map (secure & fast)
+  const userRole = userRoles[userId];
+  
+  if (!userRole) {
+    console.log('❌ Unknown user ID:', userId);
+    return res.status(400).json({ success: false, message: 'Invalid user ID' });
+  }
+
+  const orderId = `ORD${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Get user name for createdByName field
+  let createdByName = 'Unknown';
+  if (userId === 'usr_admin_001') {
+    createdByName = 'Admin';
+  } else if (userId === 'usr_nazir_001') {
+    createdByName = 'Baseel';
+  }
+
+  console.log('=== DATABASE TRANSACTION START ===');
+  
+  // Use transaction to prevent race condition between sequence and insert
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Get sequential order number within transaction
+    const orderNumberResult = await client.query('SELECT nextval(\'order_number_seq\') as orderNumber');
+    const orderNumber = orderNumberResult.rows[0].ordernumber; // PostgreSQL returns lowercase
+    
+    // Insert order with the obtained sequence number
+    const query = `
+      INSERT INTO orders (id, orderNumber, userId, createdByName, items, total, tax, grandTotal, paymentMethod, status) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *
+    `;
+    
+    console.log('Query:', query);
+    console.log('Values:', [orderId, orderNumber, userId, createdByName, JSON.stringify(items), total, tax || 0, grandTotal, paymentMethod, 'pending']);
+
+    const result = await client.query(
+      query,
+      [orderId, orderNumber, userId, createdByName, JSON.stringify(items), total, tax || 0, grandTotal, paymentMethod, 'pending']
+    );
+    
+    await client.query('COMMIT');
+    
+    const order = {
+      ...result.rows[0],
+      items: typeof result.rows[0].items === "string" ? JSON.parse(result.rows[0].items) : result.rows[0].items,
+    };
+
+    console.log('=== ORDER CREATED SUCCESSFULLY ===');
+    console.log('Order created:', order);
+    console.log('Created by user ID:', userId);
+    console.log('User role from cache:', userRole);
+
+    // Send push notification to Baseel for ALL new orders (both admin and staff)
+  console.log('🔔 New order created - sending notification to Baseel');
+  console.log('📱 Order created by:', userId, '(', userRole, ')');
+  console.log('🎯 Sending NEW ORDER notification to Baseel (usr_nazir_001)');
+  await sendPushNotificationToBaseel(order);
+
+  // Send confirmation to user who created order
+  console.log('📱 Sending ORDER CONFIRMED to creator:', userId);
+  await sendPushNotificationToUser(order, userId);
+
+    res.json({ success: true, message: 'Order created', order });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Transaction rolled back:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+} catch (error) {
+  console.error('=== ORDER CREATION ERROR ===');
+  console.error('Error details:', error);
+  res.status(500).json({ success: false, error: error.message });
+}
 });
 
-// Send push notification to Baseel
+// Send push notification to Baseel (only to active devices)
 async function sendPushNotificationToBaseel(order) {
   try {
     console.log('🎯 sendPushNotificationToBaseel called for order:', order.id);
     
-    // Get Baseel's device tokens (ACTIVE + INACTIVE) - Baseel should always receive new orders!
+    // Get Baseel's ACTIVE device tokens only
     const devicesResponse = await pool.query(
-      'SELECT token, platform, isActive FROM user_devices WHERE userId = $1',
+      'SELECT token FROM user_devices WHERE userId = $1 AND isActive = true',
       ['usr_nazir_001'] // Baseel user ID
     );
-
+    
     const tokens = devicesResponse.rows.map(row => row.token);
-    console.log('📱 Baseel devices found:', tokens.length);
-    console.log('📱 Baseel device tokens:', tokens.map(t => t.slice(-10)));
-    console.log('📱 Baseel device active status:', devicesResponse.rows.map(r => ({token: r.token.slice(-10), active: r.isactive})));
 
-    if (tokens.length === 0) {
-      console.log('❌ No devices found for Baseel (usr_nazir_001)');
+  if (tokens.length === 0) {
+      console.log('❌ No active devices found for Baseel - notifications disabled');
       return;
     }
 
-    // Send push notifications to ALL devices in PARALLEL for better performance
+    console.log('📱 Found', tokens.length, 'active Baseel devices for notifications');
+
+    // Send push notifications to ALL active devices in PARALLEL for better performance
     // Prepare notification data once
     const items = typeof order.items === "string"
       ? JSON.parse(order.items)
       : order.items;
-    const itemNames = items.map(i => i.item.name).slice(0, 3);
+    const itemNames = items.map(item => item.item.name).slice(0, 3);
     const itemsText = itemNames.length > 2 
       ? `${itemNames.join(', ')} + ${items.length - 2} more`
       : itemNames.join(', ');
@@ -351,24 +428,24 @@ async function sendPushNotificationToBaseel(order) {
           {
             to: token,
             sound: 'default',
-            title: '🔔 NEW ORDER RECEIVED',
-            body: `📋 Order #${order.id.slice(-6)}\n🍹 ${itemsText}\n💰 ₹${order.total}\n🕐 ${orderTime}`,
+            title: '🧾 New Order - Hanifa Jigarthanda',
+            body: `${itemsText} • ₹${order.grandTotal} • ${orderTime}`,
             data: { 
               orderId: order.id,
               type: 'new_order',
-              screen: 'orders',
-              priority: 'urgent'
+              userId: order.userId,
+              total: order.grandTotal,
+              items: itemsText,
+              time: orderTime
             },
             priority: 'high',
-            badge: 1,
-            channelId: 'orders'
           },
           { timeout: 5000 }
         );
-        console.log(`✅ Push notification sent to device: ${token.slice(-10)}`);
+        console.log(`✅ Push notification sent to active device: ${token.slice(-10)}`);
         return { success: true, token: token.slice(-10) };
       } catch (error) {
-        console.error(`❌ Push failed for device ${token.slice(-10)}:`, error.message);
+        console.error(`❌ Push failed for active device ${token.slice(-10)}:`, error.message);
         return { success: false, token: token.slice(-10), error: error.message };
       }
     });
@@ -380,9 +457,9 @@ async function sendPushNotificationToBaseel(order) {
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     const failed = results.filter(r => r.status === 'rejected' || !r.value.success).length;
     
-    console.log(`📊 Parallel notification results: ${successful} successful, ${failed} failed`);
+    console.log(`📊 Active device notification results: ${successful} successful, ${failed} failed`);
 
-    console.log('✅ Push notification sent to Baseel devices:', tokens.length);
+    console.log('✅ Push notification sent to active Baseel devices:', tokens.length);
 
   } catch (error) {
     console.error('❌ Push notification error:', error);
@@ -785,25 +862,45 @@ app.get('/api/settings', async (req, res) => {
 });
 
 // Register device for push notifications
-app.post('/api/register-device', async (req, res) => {
+app.post('/register-device', async (req, res) => {
   try {
     const { userId, token, platform } = req.body;
+    console.log('📱 Device registration request:', { userId, token: token.slice(-10), platform });
 
-    if (!userId || !token) {
-      return res.status(400).json({ success: false, message: 'Missing userId or token' });
-    }
-
-    const result = await pool.query(
-      'INSERT INTO user_devices (userId, token, platform, isActive) VALUES ($1, $2, $3, false) ON CONFLICT (userId, token) DO UPDATE SET platform = EXCLUDED.platform, isActive = EXCLUDED.isActive',
+    await pool.query(
+      'INSERT INTO user_devices (userId, token, platform, isActive) VALUES ($1, $2, $3, true) ON CONFLICT (userId, token) DO UPDATE SET isActive = true, platform = EXCLUDED.platform',
       [userId, token, platform]
     );
 
-    console.log('✅ Device registered:', userId);
+    console.log('✅ Device registered successfully for user:', userId);
     res.json({ success: true, message: 'Device registered successfully' });
-
   } catch (error) {
     console.error('❌ Device registration error:', error);
-    res.status(500).json({ success: false, message: 'Registration failed' });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Logout device - deactivate device on logout
+app.post('/logout-device', async (req, res) => {
+  try {
+    const { token } = req.body;
+    console.log('📱 Device logout request:', { token: token.slice(-10) });
+
+    const result = await pool.query(
+      'UPDATE user_devices SET isActive = false WHERE token = $1',
+      [token]
+    );
+
+    if (result.rowCount > 0) {
+      console.log('✅ Device deactivated successfully');
+      res.json({ success: true, message: 'Device deactivated successfully' });
+    } else {
+      console.log('⚠️ Device not found for deactivation');
+      res.json({ success: false, message: 'Device not found' });
+    }
+  } catch (error) {
+    console.error('❌ Device logout error:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

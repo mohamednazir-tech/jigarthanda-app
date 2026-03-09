@@ -95,7 +95,7 @@ export const menuItems: MenuItem[] = [
   {
     id: '15',
     name: 'Mango Ice Cream',
-    nameLocal: 'மாம்பழ ஐஸ்கிரீம்',
+    nameLocal: 'மேங்கோ ஐஸ்கிரீம்',
     price: 60,
     category: 'addon',
   },
@@ -160,7 +160,7 @@ export const menuItems: MenuItem[] = [
   {
     id: '24',
     name: 'Parcel Mango Ice Cream',
-    nameLocal: 'பார்சல் மாம்பழ ஐஸ்கிரீம்',
+    nameLocal: 'பார்சல் மேங்கோ ஐஸ்கிரீம்',
     price: 65,
     category: 'parcel',
   },
