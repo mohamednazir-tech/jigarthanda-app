@@ -964,25 +964,38 @@ app.get('/api/baseel-sales-report', async (req, res) => {
         o.items,
         o.total,
         o.createdAt,
-        o.paymentMethod
+        o.paymentMethod,
+        o.id,
+        o.grandTotal
       FROM orders o
       WHERE o.createdAt >= NOW() - INTERVAL '3 days'
-        AND o.total > 0
       ORDER BY o.createdAt DESC
     `;
     
     const salesResult = await pool.query(salesDataQuery);
     const orders = salesResult.rows;
     
+    console.log('📊 Found orders for last 3 days:', orders.length);
+    
     // Parse items and calculate frequencies
     const itemStats = {};
     const timeStats = { morning: 0, afternoon: 0, evening: 0, night: 0 };
     let totalRevenue = 0;
     let validOrderCount = 0;
+    const revenueByDate = {};
     
     orders.forEach(order => {
       const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
       const hour = new Date(order.createdat).getHours();
+      const orderDate = new Date(order.createdat).toISOString().split('T')[0];
+      
+      // Initialize date revenue tracking
+      if (!revenueByDate[orderDate]) {
+        revenueByDate[orderDate] = 0;
+      }
+      
+      // Log order details for debugging
+      console.log(`🔍 Order ${order.id}: total=${order.total}, grandTotal=${order.grandTotal}, date=${orderDate}`);
       
       // Categorize by time
       if (hour >= 6 && hour < 12) timeStats.morning++;
@@ -990,11 +1003,13 @@ app.get('/api/baseel-sales-report', async (req, res) => {
       else if (hour >= 17 && hour < 21) timeStats.evening++;
       else timeStats.night++;
       
-      // Safely parse order total with validation
-      const orderTotal = parseFloat(order.total);
+      // Use grandTotal if available, otherwise total
+      const orderTotal = parseFloat(order.grandTotal || order.total);
       if (!isNaN(orderTotal) && orderTotal > 0) {
         totalRevenue += orderTotal;
+        revenueByDate[orderDate] += orderTotal;
         validOrderCount++;
+        console.log(`✅ Added revenue: ${orderTotal} for order ${order.id}, date ${orderDate}`);
       } else {
         console.log('⚠️ Invalid order total:', order.total, 'for order:', order.id);
       }
@@ -1068,7 +1083,8 @@ app.get('/api/baseel-sales-report', async (req, res) => {
       validOrderCount: validOrderCount,
       totalRevenue: report.summary.totalRevenue,
       avgOrderValue: report.summary.avgOrderValue,
-      topItem: report.insights.topPerformer
+      topItem: report.insights.topPerformer,
+      revenueByDate: revenueByDate
     });
     
     res.json({
