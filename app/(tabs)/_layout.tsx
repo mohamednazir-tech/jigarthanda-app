@@ -33,8 +33,14 @@ export default function TabLayout() {
   console.log('🔍 TabLayout - Show Orders?', effectiveUser !== 'usr_admin_001');
   console.log('🔍 TabLayout - Show Report?', effectiveUser === 'usr_nazir_001');
 
+  // Force re-render when user changes
+  const [key, setKey] = useState(0);
+  useEffect(() => {
+    setKey(prev => prev + 1);
+  }, [effectiveUser]);
+
   return (
-    <Tabs
+    <Tabs key={key}
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
@@ -70,7 +76,7 @@ export default function TabLayout() {
       />
       
       {/* Orders tab - Hide from admin users */}
-      {effectiveUser !== 'usr_admin_001' && (
+      {effectiveUser && effectiveUser !== 'usr_admin_001' && (
         <Tabs.Screen
           name="orders"
           options={{
@@ -89,7 +95,7 @@ export default function TabLayout() {
       )}
       
       {/* Report tab - Only show for Baseel users */}
-      {effectiveUser === 'usr_nazir_001' && (
+      {effectiveUser && effectiveUser === 'usr_nazir_001' && (
         <Tabs.Screen
           name="baseel-report"
           options={{
