@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import Colors from '../../constants/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SalesReport {
   timestamp: string;
@@ -48,16 +49,42 @@ export default function BaseelReportScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   const BASE_URL = 'https://jigarthanda-api.onrender.com';
   const BASEEL_USER_ID = 'usr_nazir_001';
+
+  // Check current user on mount
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        setCurrentUser(userId);
+        
+        // If not Baseel, don't fetch report
+        if (userId !== BASEEL_USER_ID) {
+          setError('Access denied - This report is for Baseel only');
+          setLoading(false);
+          return;
+        }
+        
+        await fetchReport();
+      } catch (err) {
+        console.error('Error checking user:', err);
+        setError('Authentication error');
+        setLoading(false);
+      }
+    };
+    
+    checkUser();
+  }, []);
 
   const fetchReport = async () => {
     try {
       setRefreshing(true);
       setError(null);
 
-      // Try the new Baseel report endpoint first
+      // Try to new Baseel report endpoint first
       let response = await fetch(
         `${BASE_URL}/api/baseel-sales-report?userId=${BASEEL_USER_ID}`
       );
@@ -101,6 +128,7 @@ export default function BaseelReportScreen() {
           }
         };
 
+        console.log('📊 Fallback report data:', mockReport);
         setReport(mockReport);
         return;
       }
@@ -108,6 +136,7 @@ export default function BaseelReportScreen() {
       const data = await response.json();
       
       if (data.success) {
+        console.log('📊 Baseel report data received:', data.report);
         setReport(data.report);
       } else {
         setError('Failed to load report data');
@@ -122,12 +151,10 @@ export default function BaseelReportScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchReport();
-  }, []);
-
   const onRefresh = () => {
-    fetchReport();
+    if (currentUser === BASEEL_USER_ID) {
+      fetchReport();
+    }
   };
 
   if (loading || !report) {

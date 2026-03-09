@@ -3,8 +3,19 @@ import { Ionicons } from '@expo/vector-icons';
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Colors from "@/constants/colors";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
+  const [currentUser, setCurrentUser] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      setCurrentUser(userId);
+    };
+    checkUser();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
@@ -55,21 +66,24 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="baseel-report"
-        options={{
-          title: "Report",
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons 
-                name="bar-chart" 
-                size={24} 
-                color={color}
-              />
-            </View>
-          ),
-        }}
-      />
+      {/* Only show Report tab for Baseel user */}
+      {currentUser === 'usr_nazir_001' && (
+        <Tabs.Screen
+          name="baseel-report"
+          options={{
+            title: "Report",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View style={styles.iconContainer}>
+                <Ionicons 
+                  name="bar-chart" 
+                  size={24} 
+                  color={color}
+                />
+              </View>
+            ),
+          }}
+        />
+      )}
       <Tabs.Screen
         name="settings"
         options={{
