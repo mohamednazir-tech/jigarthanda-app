@@ -191,11 +191,12 @@ export default function BaseelReportScreen() {
     );
   }
 
-  if (!report) {
+  // Always show loading state instead of "No report data available"
+  if (!report && !refreshing) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}> ⚠️ No report data available</Text>
-        <Text style={styles.retryText} onPress={onRefresh}>Tap to retry</Text>
+        <Text style={styles.loadingText}>Loading report data...</Text>
+        <Text style={styles.retryText} onPress={onRefresh}>Tap to refresh</Text>
       </View>
     );
   }
@@ -206,7 +207,9 @@ export default function BaseelReportScreen() {
 
   const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
   const getPerformanceColor = (performance: string) => 
-    performance.includes('🔥') ? '#FF6B6B' : '#4CAF50';
+    performance === 'Excellent' ? '#10B981' :
+    performance === 'Good' ? '#34D399' :
+    performance === 'Average' ? '#F59E0B' : '#EF4444';
 
   return (
     <ScrollView 
@@ -318,22 +321,6 @@ export default function BaseelReportScreen() {
         </View>
         
         {report.allItemsRanked && report.allItemsRanked.length > 0 ? (
-          report.allItemsRanked.map((item: any, index: any) => (
-            <View key={`${item.name}-${item.rank}`} style={styles.itemCard}>
-              <View style={styles.itemHeader}>
-                <Text style={styles.itemRank}>#{item.rank}</Text>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={[styles.performance, { color: getPerformanceColor(item.performance) }]}>
-                  {item.performance}
-                </Text>
-              </View>
-              
-              <View style={styles.itemStats}>
-                <View style={styles.statRow}>
-                  <Text style={styles.statLabel}>Units Sold:</Text>
-                  <Text style={styles.statValue}>{item.unitsSold}</Text>
-                </View>
-                
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Revenue:</Text>
                   <Text style={styles.statValue}>
@@ -417,6 +404,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     color: Colors.error,
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: Colors.text,
     textAlign: 'center',
     marginTop: 50,
   },
