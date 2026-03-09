@@ -90,8 +90,13 @@ export default function OrdersScreen() {
   const { orders, todayOrders, todayTotal, deleteAllOrders, loadData } = useOrders();
   const [isLive, setIsLive] = useState(true); // Live indicator
   
+  // Debug: Log user authentication
+  console.log('🔍 Orders Screen - User ID:', user?.id);
+  console.log('🔍 Orders Screen - User Role:', user?.role);
+  
   // Security: Hide Orders screen from admin users
   if (user?.id === 'usr_admin_001') {
+    console.log('❌ Orders Screen - Access denied for admin user');
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.accessDeniedContainer}>
