@@ -46,7 +46,6 @@ interface SalesReport {
 
 export default function BaseelReportScreen() {
   const [report, setReport] = useState<SalesReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
@@ -64,7 +63,6 @@ export default function BaseelReportScreen() {
         // If not Baseel, don't fetch report
         if (userId !== BASEEL_USER_ID) {
           setError('Access denied - This report is for Baseel only');
-          setLoading(false);
           return;
         }
         
@@ -72,7 +70,6 @@ export default function BaseelReportScreen() {
       } catch (err) {
         console.error('Error checking user:', err);
         setError('Authentication error');
-        setLoading(false);
       }
     };
     
@@ -91,7 +88,7 @@ export default function BaseelReportScreen() {
 
       // If that fails, fall back to stats endpoint for demo
       if (!response.ok) {
-        console.log('🔄 Baseel report endpoint not ready, falling back to stats endpoint');
+        console.log(' Baseel report endpoint not ready, falling back to stats endpoint');
         response = await fetch(`${BASE_URL}/api/orders/stats`);
         
         if (!response.ok) {
@@ -128,7 +125,7 @@ export default function BaseelReportScreen() {
           }
         };
 
-        console.log('📊 Fallback report data:', mockReport);
+        console.log(' Fallback report data:', mockReport);
         setReport(mockReport);
         return;
       }
@@ -136,7 +133,7 @@ export default function BaseelReportScreen() {
       const data = await response.json();
       
       if (data.success) {
-        console.log('📊 Baseel report data received:', data.report);
+        console.log(' Baseel report data received:', data.report);
         setReport(data.report);
       } else {
         setError('Failed to load report data');
@@ -146,7 +143,6 @@ export default function BaseelReportScreen() {
       console.error('Error fetching report:', err);
       setError('Network error - Please check connection');
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -157,18 +153,19 @@ export default function BaseelReportScreen() {
     }
   };
 
-  if (loading || !report) {
+  if (error) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>📊 Loading Baseel Sales Report...</Text>
+        <Text style={styles.errorText}> ⚠️ {error}</Text>
+        <Text style={styles.retryText} onPress={onRefresh}>Tap to retry</Text>
       </View>
     );
   }
 
-  if (error) {
+  if (!report) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>⚠️ {error}</Text>
+        <Text style={styles.errorText}> ⚠️ No report data available</Text>
         <Text style={styles.retryText} onPress={onRefresh}>Tap to retry</Text>
       </View>
     );
@@ -414,12 +411,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.white,
     opacity: 0.8,
-  },
-  loadingText: {
-    fontSize: 18,
-    color: Colors.text,
-    textAlign: 'center',
-    marginTop: 50,
   },
   errorText: {
     fontSize: 18,
