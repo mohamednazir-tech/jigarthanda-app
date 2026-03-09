@@ -33,14 +33,8 @@ export default function TabLayout() {
   console.log('🔍 TabLayout - Show Orders?', effectiveUser !== 'usr_admin_001');
   console.log('🔍 TabLayout - Show Report?', effectiveUser === 'usr_nazir_001');
 
-  // Force re-render when user changes
-  const [key, setKey] = useState(0);
-  useEffect(() => {
-    setKey(prev => prev + 1);
-  }, [effectiveUser]);
-
   return (
-    <Tabs key={key}
+    <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
@@ -75,43 +69,53 @@ export default function TabLayout() {
         }}
       />
       
-      {/* Orders tab - Hide from admin users */}
-      {effectiveUser && effectiveUser !== 'usr_admin_001' && (
-        <Tabs.Screen
-          name="orders"
-          options={{
-            title: "Orders",
-            tabBarIcon: ({ color, size, focused }) => (
-              <View style={styles.iconContainer}>
-                <Ionicons 
-                  name="list" 
-                  size={24} 
-                  color={color}
-                />
-              </View>
-            ),
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: "Orders",
+          tabBarButton: (props) => {
+            // Hide Orders tab from admin users
+            if (effectiveUser === 'usr_admin_001') {
+              return null;
+            }
+            // Default behavior for other users
+            return undefined;
+          },
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={styles.iconContainer}>
+              <Ionicons 
+                name="list" 
+                size={24} 
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
       
-      {/* Report tab - Only show for Baseel users */}
-      {effectiveUser && effectiveUser === 'usr_nazir_001' && (
-        <Tabs.Screen
-          name="baseel-report"
-          options={{
-            title: "Report",
-            tabBarIcon: ({ color, size, focused }) => (
-              <View style={styles.iconContainer}>
-                <Ionicons 
-                  name="analytics" 
-                  size={24} 
-                  color={color}
-                />
-              </View>
-            ),
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="baseel-report"
+        options={{
+          title: "Report",
+          tabBarButton: (props) => {
+            // Only show Report tab for Baseel users
+            if (effectiveUser !== 'usr_nazir_001') {
+              return null;
+            }
+            // Default behavior for Baseel users
+            return undefined;
+          },
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={styles.iconContainer}>
+              <Ionicons 
+                name="analytics" 
+                size={24} 
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
       
       <Tabs.Screen
         name="settings"
