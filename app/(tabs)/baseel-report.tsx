@@ -58,14 +58,19 @@ export default function BaseelReportScreen() {
     const checkUser = async () => {
       try {
         const userId = await AsyncStorage.getItem('userId');
+        console.log('🔍 Baseel Report - Current userId:', userId);
+        console.log('🔍 Baseel Report - Expected userId:', BASEEL_USER_ID);
+        
         setCurrentUser(userId);
         
-        // If not Baseel, don't fetch report
+        // If not Baseel, show access denied
         if (userId !== BASEEL_USER_ID) {
+          console.log('❌ Access denied - User is not Baseel');
           setError('Access denied - This report is for Baseel only');
           return;
         }
         
+        console.log('✅ User authenticated as Baseel - Fetching report');
         await fetchReport();
       } catch (err) {
         console.error('Error checking user:', err);
@@ -80,15 +85,19 @@ export default function BaseelReportScreen() {
     try {
       setRefreshing(true);
       setError(null);
+      
+      console.log('🔄 Starting Baseel report fetch...');
 
       // Try to new Baseel report endpoint first
       let response = await fetch(
         `${BASE_URL}/api/baseel-sales-report?userId=${BASEEL_USER_ID}`
       );
 
+      console.log('📊 API Response status:', response.status);
+
       // If that fails, fall back to stats endpoint for demo
       if (!response.ok) {
-        console.log(' Baseel report endpoint not ready, falling back to stats endpoint');
+        console.log('🔄 Baseel report endpoint not ready, falling back to stats endpoint');
         response = await fetch(`${BASE_URL}/api/orders/stats`);
         
         if (!response.ok) {
@@ -96,6 +105,7 @@ export default function BaseelReportScreen() {
         }
 
         const data = await response.json();
+        console.log('📊 Stats data received:', data);
         
         // Create a mock report structure from stats data
         const mockReport = {
@@ -125,22 +135,24 @@ export default function BaseelReportScreen() {
           }
         };
 
-        console.log(' Fallback report data:', mockReport);
+        console.log('📊 Fallback report data:', mockReport);
         setReport(mockReport);
         return;
       }
 
       const data = await response.json();
+      console.log('📊 Baseel report data received:', data);
       
       if (data.success) {
-        console.log(' Baseel report data received:', data.report);
+        console.log('✅ Setting report data:', data.report);
         setReport(data.report);
       } else {
+        console.log('❌ API returned error:', data);
         setError('Failed to load report data');
       }
 
     } catch (err) {
-      console.error('Error fetching report:', err);
+      console.error('❌ Error fetching report:', err);
       setError('Network error - Please check connection');
     } finally {
       setRefreshing(false);
@@ -170,6 +182,10 @@ export default function BaseelReportScreen() {
       </View>
     );
   }
+
+  // Debug: Show current user info
+  console.log('🔍 Current user in render:', currentUser);
+  console.log('🔍 Report data available:', !!report);
 
   const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
   const getPerformanceColor = (performance: string) => 
