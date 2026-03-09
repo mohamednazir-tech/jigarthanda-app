@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import Colors from '../../constants/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
 
 interface SalesReport {
   timestamp: string;
@@ -37,6 +38,7 @@ interface SalesReport {
 }
 
 export default function BaseelReportScreen() {
+  const { user } = useAuth();
   const [report, setReport] = useState<SalesReport | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,18 +47,18 @@ export default function BaseelReportScreen() {
   const BASE_URL = 'https://jigarthanda-api.onrender.com';
   const BASEEL_USER_ID = 'usr_nazir_001';
 
-  // Security: Hide Report screen from admin users
-  if (currentUser === 'usr_admin_001') {
+  // Security: Hide Report screen from staff users (role-based)
+  if (user?.role === 'staff') {
     return (
       <View style={styles.container}>
         <View style={styles.accessDeniedContainer}>
           <MaterialIcons name="assessment" size={64} color={Colors.error} />
           <Text style={styles.accessDeniedTitle}>Access Denied</Text>
           <Text style={styles.accessDeniedMessage}>
-            Business analytics is not available for admin users.
+            Business analytics is not available for staff users.
           </Text>
           <Text style={styles.accessDeniedSubMessage}>
-            Please switch to a business account to access reports.
+            Please switch to an admin account to access reports.
           </Text>
         </View>
       </View>
@@ -69,18 +71,19 @@ export default function BaseelReportScreen() {
       try {
         const userId = await AsyncStorage.getItem('userId');
         console.log('🔍 Baseel Report - Current userId:', userId);
+        console.log('🔍 Baseel Report - User role:', user?.role);
         console.log('🔍 Baseel Report - Expected userId:', BASEEL_USER_ID);
         
         setCurrentUser(userId);
         
-        // Enable strict security check
-        if (userId !== BASEEL_USER_ID) {
-          console.log('❌ Access denied - User is not Baseel');
-          setError('Access denied - This report is for Baseel only');
+        // Enable strict security check - only admin role can access
+        if (user?.role !== 'admin') {
+          console.log('❌ Access denied - User is not admin');
+          setError('Access denied - This report is for admin users only');
           return;
         }
         
-        console.log('✅ User authenticated as Baseel - Fetching report');
+        console.log('✅ User authenticated as admin - Fetching report');
         await fetchReport();
       } catch (err) {
         console.error('Error checking user:', err);
@@ -89,7 +92,7 @@ export default function BaseelReportScreen() {
     };
     
     checkUser();
-  }, []);
+  }, [user]); // Update when user changes
 
   const fetchReport = async () => {
     try {
