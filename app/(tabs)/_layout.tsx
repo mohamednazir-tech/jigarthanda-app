@@ -29,12 +29,14 @@ export default function TabLayout() {
 
   // Use fallback from auth context if AsyncStorage is not ready
   const effectiveUser = currentUser || user?.id;
+  const userRole = user?.role;
   console.log('🔍 TabLayout - Effective user:', effectiveUser);
-  console.log('🔍 TabLayout - Show Orders?', effectiveUser !== 'usr_admin_001');
-  console.log('🔍 TabLayout - Show Report?', effectiveUser === 'usr_nazir_001');
+  console.log('🔍 TabLayout - User role:', userRole);
+  console.log('🔍 TabLayout - Show Orders?', userRole !== 'staff');
+  console.log('🔍 TabLayout - Show Report?', userRole === 'admin');
   console.log('🔍 TabLayout - User from context:', user?.id);
   console.log('🔍 TabLayout - User from storage:', currentUser);
-  console.log('🔍 TabLayout - RENDERING TABS FOR USER:', effectiveUser);
+  console.log('🔍 TabLayout - RENDERING TABS FOR ROLE:', userRole);
 
   return (
     <Tabs
@@ -77,13 +79,13 @@ export default function TabLayout() {
         options={{
           title: "Orders",
           tabBarButton: (props) => {
-            console.log('🔍 Orders TabBarButton - User:', effectiveUser);
-            // Hide Orders tab ONLY from admin users
-            if (effectiveUser === 'usr_admin_001') {
-              console.log('❌ Hiding Orders tab from admin user');
+            console.log('🔍 Orders TabBarButton - Role:', userRole);
+            // Hide Orders tab from STAFF users
+            if (userRole === 'staff') {
+              console.log('❌ Hiding Orders tab from staff user');
               return null;
             }
-            console.log('✅ Showing Orders tab for user:', effectiveUser);
+            console.log('✅ Showing Orders tab for role:', userRole);
             return undefined;
           },
           tabBarIcon: ({ color, size, focused }) => (
@@ -103,13 +105,13 @@ export default function TabLayout() {
         options={{
           title: "Report",
           tabBarButton: (props) => {
-            console.log('🔍 Report TabBarButton - User:', effectiveUser);
-            // Show Report tab ONLY for Baseel users
-            if (effectiveUser === 'usr_nazir_001') {
-              console.log('✅ Showing Report tab for Baseel user');
+            console.log('🔍 Report TabBarButton - Role:', userRole);
+            // Show Report tab for ADMIN users (Baseel has admin role)
+            if (userRole === 'admin') {
+              console.log('✅ Showing Report tab for admin user');
               return undefined;
             }
-            console.log('❌ Hiding Report tab from user:', effectiveUser);
+            console.log('❌ Hiding Report tab from role:', userRole);
             return null;
           },
           tabBarIcon: ({ color, size, focused }) => (
