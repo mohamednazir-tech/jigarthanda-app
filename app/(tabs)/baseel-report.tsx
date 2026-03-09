@@ -304,12 +304,16 @@ export default function BaseelReportScreen() {
               
               <View style={styles.statRow}>
                 <Text style={styles.statLabel}>Revenue:</Text>
-                <Text style={styles.statValue}>{formatCurrency(item.revenue)}</Text>
+                <Text style={styles.statValue}>
+                  {item.revenue !== null ? formatCurrency(item.revenue) : 'Calculating...'}
+                </Text>
               </View>
               
               <View style={styles.statRow}>
                 <Text style={styles.statLabel}>Avg Price:</Text>
-                <Text style={styles.statValue}>{formatCurrency(item.avgPrice)}</Text>
+                <Text style={styles.statValue}>
+                  {item.avgPrice !== null ? formatCurrency(item.avgPrice) : 'Calculating...'}
+                </Text>
               </View>
             </View>
           </View>
@@ -339,12 +343,16 @@ export default function BaseelReportScreen() {
               
               <View style={styles.statRow}>
                 <Text style={styles.statLabel}>Revenue:</Text>
-                <Text style={styles.statValue}>{formatCurrency(item.revenue)}</Text>
+                <Text style={styles.statValue}>
+                  {item.revenue !== null ? formatCurrency(item.revenue) : 'Calculating...'}
+                </Text>
               </View>
               
               <View style={styles.statRow}>
                 <Text style={styles.statLabel}>Avg Price:</Text>
-                <Text style={styles.statValue}>{formatCurrency(item.avgPrice)}</Text>
+                <Text style={styles.statValue}>
+                  {item.avgPrice !== null ? formatCurrency(item.avgPrice) : 'Calculating...'}
+                </Text>
               </View>
             </View>
           </View>
