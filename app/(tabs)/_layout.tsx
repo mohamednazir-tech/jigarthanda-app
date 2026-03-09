@@ -34,6 +34,7 @@ export default function TabLayout() {
   console.log('🔍 TabLayout - Show Report?', effectiveUser === 'usr_nazir_001');
   console.log('🔍 TabLayout - User from context:', user?.id);
   console.log('🔍 TabLayout - User from storage:', currentUser);
+  console.log('🔍 TabLayout - RENDERING TABS FOR USER:', effectiveUser);
 
   return (
     <Tabs
@@ -76,6 +77,7 @@ export default function TabLayout() {
         options={{
           title: "Orders",
           tabBarButton: (props) => {
+            console.log('🔍 Orders TabBarButton - User:', effectiveUser);
             // Hide Orders tab ONLY from admin users
             if (effectiveUser === 'usr_admin_001') {
               console.log('❌ Hiding Orders tab from admin user');
@@ -101,6 +103,7 @@ export default function TabLayout() {
         options={{
           title: "Report",
           tabBarButton: (props) => {
+            console.log('🔍 Report TabBarButton - User:', effectiveUser);
             // Show Report tab ONLY for Baseel users
             if (effectiveUser === 'usr_nazir_001') {
               console.log('✅ Showing Report tab for Baseel user');
