@@ -201,6 +201,15 @@ export default function BaseelReportScreen() {
     );
   }
 
+  if (!report) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading report data...</Text>
+        <Text style={styles.retryText} onPress={onRefresh}>Tap to refresh</Text>
+      </View>
+    );
+  }
+
   // Debug: Show current user info
   console.log('🔍 Current user in render:', currentUser);
   console.log('🔍 Report data available:', !!report);
@@ -320,27 +329,57 @@ export default function BaseelReportScreen() {
           <Text style={styles.sectionTitle}>All Items Ranking (Last 3 Days)</Text>
         </View>
         
-        {report.allItemsRanked && report.allItemsRanked.length > 0 ? (
+        {report?.allItemsRanked && report.allItemsRanked.length > 0 ? (
+          report.allItemsRanked.map((item) => (
+            <View key={item.rank} style={styles.itemCard}>
+              
+              <View style={styles.itemHeader}>
+                <Text style={styles.itemRank}>{item.rank}</Text>
+                <Text style={styles.itemName}>{item.name}</Text>
+
+                <Text
+                  style={[
+                      styles.performance,
+                      { color: getPerformanceColor(item.performance) }
+                    ]}
+                >
+                  {item.performance}
+                </Text>
+              </View>
+
+              <View style={styles.itemStats}>
+                <View style={styles.statRow}>
+                  <Text style={styles.statLabel}>Units Sold:</Text>
+                  <Text style={styles.statValue}>{item.unitsSold}</Text>
+                </View>
+
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Revenue:</Text>
                   <Text style={styles.statValue}>
-                    {item.revenue !== null ? formatCurrency(item.revenue) : 'Calculating...'}
+                    {item.revenue !== null
+                      ? formatCurrency(item.revenue)
+                      : "Calculating..."}
                   </Text>
                 </View>
-                
+
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Avg Price:</Text>
                   <Text style={styles.statValue}>
-                    {item.avgPrice !== null ? formatCurrency(item.avgPrice) : 'Calculating...'}
+                    {item.avgPrice !== null
+                      ? formatCurrency(item.avgPrice)
+                      : "Calculating..."}
                   </Text>
                 </View>
               </View>
+
             </View>
           ))
         ) : (
           <View style={styles.itemCard}>
             <Text style={styles.itemName}>No item data available</Text>
-            <Text style={styles.statValue}>Server restarting - Please refresh</Text>
+            <Text style={styles.statValue}>
+              Server restarting - Please refresh
+            </Text>
           </View>
         )}
       </View>
@@ -367,7 +406,7 @@ export default function BaseelReportScreen() {
         <View style={styles.insightsCard}>
           <FontAwesome5 name="bullseye" size={20} color={Colors.primary} />
           <Text style={styles.insightTitle}>Today's Recommendation</Text>
-          <Text style={styles.insightValue}>{report.insights.recommendation}</Text>
+          <Text style={styles.insightValue}>{report?.insights.recommendation}</Text>
         </View>
       </View>
     </ScrollView>
