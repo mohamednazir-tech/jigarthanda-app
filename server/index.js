@@ -1730,6 +1730,4 @@ app.post('/api/update-password', async (req, res) => {
   }
 });
 
-startServer();
-
 module.exports = app;
