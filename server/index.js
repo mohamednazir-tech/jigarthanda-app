@@ -56,6 +56,19 @@ app.use(express.json());
 
 const createTables = async () => {
   try {
+    // Create users table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(50) PRIMARY KEY,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'user',
+        createdAt TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updatedAt TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
     // Create orders table with all required columns
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
