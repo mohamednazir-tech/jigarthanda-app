@@ -4,8 +4,8 @@ const BASE_URL = 'https://jigarthanda-api.onrender.com';
 // Test Data
 const testUserId = 'usr_nazir_001';
 const testNewUsername = 'testuser_' + Date.now();
-const testCurrentPassword = 'admin123';
-const testNewPassword = 'newpassword123';
+const testCurrentPassword = 'baseel123'; // Correct password for usr_nazir_001
+const testNewPassword = 'finalpassword123';
 
 console.log('🧪 Testing Account Settings Endpoints...\n');
 

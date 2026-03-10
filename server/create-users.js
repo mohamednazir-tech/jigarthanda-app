@@ -1,9 +1,9 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 
-// Use the same database connection as the server
+// Use production database URL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: 'https://jigarthanda-api.onrender.com',
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
