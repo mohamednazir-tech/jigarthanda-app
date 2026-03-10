@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, Animated } from 'react-native';
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import Colors from '../../constants/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -43,6 +43,28 @@ export default function BaseelReportScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  // Loading animation
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
+
+  // Start loading animation
+  useEffect(() => {
+    if (!report && !refreshing) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [report, refreshing, fadeAnim, scaleAnim]);
 
   const BASE_URL = 'https://jigarthanda-api.onrender.com';
   const BASEEL_USER_ID = 'usr_nazir_001';
@@ -195,8 +217,27 @@ export default function BaseelReportScreen() {
   if (!report && !refreshing) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading report data...</Text>
-        <Text style={styles.retryText} onPress={onRefresh}>Tap to refresh</Text>
+        <Animated.View 
+          style={[
+            styles.loadingContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        >
+          <View style={styles.loadingIconContainer}>
+            <MaterialIcons name="assessment" size={48} color={Colors.primary} />
+            <View style={styles.loadingDots}>
+              <View style={[styles.dot, styles.dot1]} />
+              <View style={[styles.dot, styles.dot2]} />
+              <View style={[styles.dot, styles.dot3]} />
+            </View>
+          </View>
+          <Text style={styles.loadingText}>Loading report data...</Text>
+          <Text style={styles.loadingSubText}>Fetching business analytics</Text>
+          <Text style={styles.retryText} onPress={onRefresh}>Tap to refresh</Text>
+        </Animated.View>
       </View>
     );
   }
@@ -451,6 +492,45 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     marginTop: 50,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  loadingIconContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    marginTop: 15,
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  dot1: {
+    backgroundColor: Colors.primary,
+  },
+  dot2: {
+    backgroundColor: Colors.primary,
+    opacity: 0.6,
+  },
+  dot3: {
+    backgroundColor: Colors.primary,
+    opacity: 0.3,
+  },
+  loadingSubText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   retryText: {
     fontSize: 16,
