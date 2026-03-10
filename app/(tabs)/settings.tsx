@@ -74,8 +74,17 @@ export default function SettingsScreen() {
       const data = await response.json();
 
       if (data.success) {
-        // Update local storage
-        await AsyncStorage.setItem('username', username.trim());
+        // Update users database in AsyncStorage
+        const USERS_DB_KEY = 'hanifa_users_db';
+        const storedUsersDb = await AsyncStorage.getItem(USERS_DB_KEY);
+        const usersDb = storedUsersDb ? JSON.parse(storedUsersDb) : [];
+        
+        // Update username in the users database
+        const updatedUsersDb = usersDb.map((u: any) => 
+          u.id === user?.id ? { ...u, username: username.trim() } : u
+        );
+        
+        await AsyncStorage.setItem(USERS_DB_KEY, JSON.stringify(updatedUsersDb));
         
         // Update user context
         if (user) {
@@ -128,6 +137,18 @@ export default function SettingsScreen() {
       const data = await response.json();
 
       if (data.success) {
+        // Update users database in AsyncStorage
+        const USERS_DB_KEY = 'hanifa_users_db';
+        const storedUsersDb = await AsyncStorage.getItem(USERS_DB_KEY);
+        const usersDb = storedUsersDb ? JSON.parse(storedUsersDb) : [];
+        
+        // Update password in the users database
+        const updatedUsersDb = usersDb.map((u: any) => 
+          u.id === user?.id ? { ...u, password: newPassword } : u
+        );
+        
+        await AsyncStorage.setItem(USERS_DB_KEY, JSON.stringify(updatedUsersDb));
+        
         Alert.alert('Success', 'Password updated successfully!');
         
         // Clear password fields
