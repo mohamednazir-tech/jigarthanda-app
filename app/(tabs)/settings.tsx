@@ -15,12 +15,22 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Colors from '@/constants/colors';
 import { useOrders } from '@/context/OrdersContext';
 import { useAuth } from '@/context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
   const { settings, updateSettings } = useOrders();
   const { user, logout } = useAuth();
   const [formData, setFormData] = useState(settings);
   const [saved, setSaved] = useState(false);
+
+  // Username and password change states
+  const [username, setUsername] = useState(user?.username || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const BASE_URL = 'https://jigarthanda-api.onrender.com';
 
   // Check if user can edit settings (admin and staff)
   const canEditSettings = user?.role === 'admin' || user?.role === 'staff';
@@ -38,6 +48,100 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('Error saving settings:', error);
       Alert.alert('Error', 'Failed to save settings');
+    }
+  };
+
+  const handleUsernameChange = async () => {
+    if (!username.trim()) {
+      Alert.alert('Error', 'Username cannot be empty');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${BASE_URL}/api/update-username`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          newUsername: username.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local storage
+        await AsyncStorage.setItem('username', username.trim());
+        
+        // Update user context
+        if (user) {
+          user.username = username.trim();
+        }
+
+        Alert.alert('Success', 'Username updated successfully!');
+      } else {
+        Alert.alert('Error', data.message || 'Failed to update username');
+      }
+    } catch (error) {
+      console.error('Username update error:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      Alert.alert('Error', 'Please fill all password fields');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert('Error', 'New password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'New passwords do not match');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${BASE_URL}/api/update-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        Alert.alert('Success', 'Password updated successfully!');
+        
+        // Clear password fields
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        Alert.alert('Error', data.message || 'Failed to update password');
+      }
+    } catch (error) {
+      console.error('Password update error:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,6 +294,99 @@ export default function SettingsScreen() {
                 />
               </View>
             </View>
+          </View>
+
+          {/* Account Settings Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account Settings</Text>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputIcon}>
+                <MaterialIcons name="person" size={18} color={Colors.primary} />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Username</Text>
+                <TextInput
+                  style={styles.input}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Enter username"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.accountBtn, { backgroundColor: Colors.primary }]}
+              onPress={handleUsernameChange}
+              disabled={loading}
+            >
+              <MaterialIcons name="edit" size={18} color={Colors.white} />
+              <Text style={styles.accountBtnText}>Update Username</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputIcon}>
+                <MaterialIcons name="lock" size={18} color={Colors.primary} />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Current Password</Text>
+                <TextInput
+                  style={styles.input}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  placeholder="Enter current password"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputIcon}>
+                <MaterialIcons name="lock-outline" size={18} color={Colors.primary} />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>New Password</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Enter new password"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputIcon}>
+                <MaterialIcons name="lock-outline" size={18} color={Colors.primary} />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Confirm New Password</Text>
+                <TextInput
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm new password"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.accountBtn, { backgroundColor: Colors.success }]}
+              onPress={handlePasswordChange}
+              disabled={loading}
+            >
+              <MaterialIcons name="security" size={18} color={Colors.white} />
+              <Text style={styles.accountBtnText}>Update Password</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -426,5 +623,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.primary,
     letterSpacing: 0.5,
+  },
+  accountBtn: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  accountBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: 20,
   },
 });
