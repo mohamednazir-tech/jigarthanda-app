@@ -1572,50 +1572,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// Start server
-const startServer = async () => {
-  try {
-    await createTables();
-    
-    // Start HTTP server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
-      console.log(`📊 Local: http://localhost:${PORT}`);
-      console.log(`🌐 Network: http://10.171.132.69:${PORT}`);
-    });
-
-  // Schedule daily cleanup using simple interval
-  setInterval(deleteOldOrders, 24 * 60 * 60 * 1000); // Run once per day
-  
-  // Run immediate cleanup on server start (professional behavior)
-  console.log('🧹 Running immediate cleanup on server start...');
-  await deleteOldOrders();
-  
-  console.log("🕐 Daily summary scheduled via cron (12:01 AM daily)");
-
-    // Backup trigger for Render sleep issues - check if daily summary missed
-    setTimeout(async () => {
-      console.log("🔔 Checking for missed daily summary (backup trigger)...");
-      const now = new Date();
-      const lastRun = new Date();
-      lastRun.setHours(0, 1, 0, 0); // 12:01 AM today
-      
-      if (now.getHours() >= 1 && now.getHours() < 23) {
-        console.log("📅 Server woke up after 12:01 AM - sending missed daily summary");
-        await sendDailySummaryToBaseel();
-      }
-    }, 60000); // Check 1 minute after start
-
-} catch (error) {
-  console.error('❌ Failed to start server:', error);
-  process.exit(1);
-}
-};
-
-startServer();
-});
-
 // Update Username Endpoint
+app.post('/api/update-username', async (req, res) => {
   try {
     const { userId, newUsername } = req.body;
     
@@ -1729,5 +1687,47 @@ app.post('/api/update-password', async (req, res) => {
     });
   }
 });
+
+// Start server
+const startServer = async () => {
+  try {
+    await createTables();
+    
+    // Start HTTP server
+    app.listen(PORT, async () => {
+      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+      console.log(`📊 Local: http://localhost:${PORT}`);
+      console.log(`🌐 Network: http://10.171.132.69:${PORT}`);
+
+      // Schedule daily cleanup using simple interval
+      setInterval(deleteOldOrders, 24 * 60 * 60 * 1000); // Run once per day
+      
+      // Run immediate cleanup on server start (professional behavior)
+      console.log('🧹 Running immediate cleanup on server start...');
+      await deleteOldOrders();
+      
+      console.log("🕐 Daily summary scheduled via cron (12:01 AM daily)");
+
+      // Backup trigger for Render sleep issues - check if daily summary missed
+      setTimeout(async () => {
+        console.log("🔔 Checking for missed daily summary (backup trigger)...");
+        const now = new Date();
+        const lastRun = new Date();
+        lastRun.setHours(0, 1, 0, 0); // 12:01 AM today
+        
+        if (now.getHours() >= 1 && now.getHours() < 23) {
+          console.log("📅 Server woke up after 12:01 AM - sending missed daily summary");
+          await sendDailySummaryToBaseel();
+        }
+      }, 60000); // Check 1 minute after start
+
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;
